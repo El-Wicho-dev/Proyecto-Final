@@ -1,0 +1,102 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% block title %}Update Document{% endblock title %}
+
+
+
+{% block content %}
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card">
+                <div class="card-header text-center">
+                    ACTUALIZAR ARCHIVO
+                </div>
+                <div class="card-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="nomenclatura" class="form-label">Nomenclatura:</label>
+                            <select class="js-example-responsive" style="width: 100%" id="nomenclatura"></select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="documentoEditable" class="form-label">Adjuntar Documento editable:</label>
+                            <input type="file" class="form-control" id="documentoEditable" accept=".doc,.docx">
+                        </div>
+                        <div class="mb-3">
+                            <label for="documentoPDF" class="form-label">Adjuntar Documento PDF:</label>
+                            <input type="file" class="form-control" id="documentoPDF" accept=".pdf">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Cargar Documento</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    $(document).ready(function() {
+        $(".js-example-responsive").select2({
+            width: 'resolve', // Asegura que el ancho es establecido correctamente
+            ajax: {
+                url: '{% url "autocomplete_nomenclatura_update" %}', // Cambia esto por la URL que retorna tus datos
+                dataType: 'json',
+                delay: 250, // Retardo en milisegundos después de dejar de escribir para hacer la petición
+                data: function (params) {
+                    return {
+                        searchTerm: params.term // término de búsqueda ingresado por el usuario
+                    };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.results.map(function(item) {
+                            return { id: item.id, text: item.text };
+                        })
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 1, // Número mínimo de caracteres para iniciar la búsqueda
+            placeholder: 'Buscar...', // Texto del placeholder
+            allowClear: true // Permite limpiar el campo
+        });
+    });
+
+
+    // Añadir evento de envío al formulario
+    $('form').on('submit', function(e) {
+        e.preventDefault(); // Detener el envío del formulario para validación
+
+        var docEditable = $('#documentoEditable').val();
+        var docPDF = $('#documentoPDF').val();
+        var validFormatsEditable = /\.(doc|docx)$/i;
+        var validFormatsPDF = /\.pdf$/i;
+
+        // Validar el formato de los documentos
+        if (!validFormatsEditable.test(docEditable)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'El documento editable no tiene un formato correcto (.doc, .docx).'
+            });
+        } else if (!validFormatsPDF.test(docPDF)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'El documento PDF no tiene un formato correcto.'
+            });
+        } else {
+            // Si todo es correcto, enviar el formulario
+            this.submit();
+        }
+    });
+    
+    
+</script>
+    
+
+
+{% endblock content %}

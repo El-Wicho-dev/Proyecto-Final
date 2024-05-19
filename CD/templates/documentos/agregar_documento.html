@@ -1,0 +1,125 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% block title %}Agregar Documento{% endblock title %}
+
+{% block content %}
+
+<div class="container mt-5">
+    <h2 class="mb-4 text-center">ADD DOCUMENT</h2>
+    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+        {% csrf_token %}
+        <div class="row">
+              <!-- Tus alertas aquí 
+              {% if messages %}
+              {% for message in messages %}
+                  <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                      {{ message }}
+                      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                  </div>
+              {% endfor %}
+          {% endif %}
+            -->
+          {% if form.errors %}
+            <ul>
+                {% for field in form %}
+                {% for error in field.errors %}
+                    <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                <li><strong>Error:</strong> {{ error }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+            <div class="col-md-6 mb-3">
+                <div class="form-group">
+                    {{ documento_form.id_plantilla.label_tag }}
+                    {{ documento_form.id_plantilla }}
+                </div>
+                <div class="form-group">
+                    {{ documento_form.id_linea.label_tag }}
+                    {{ documento_form.id_linea }}
+                </div>
+                <div class="form-group">
+                    {{ documento_form.nombre.label_tag }}
+                    {{ documento_form.nombre }}
+                </div>
+                <div class="form-group">
+                    {{ documento_form.revision_de_plantilla.label_tag }}
+                    {{ documento_form.revision_de_plantilla }}
+                </div>
+                <div class="form-group">
+                    <label for="editable_document">Adjuntar Documento Editable:</label>
+                    <input type="file" class="form-control" id="editable_document" name="editable_document" accept=".docx, .doc" required>
+                </div>
+                <div class="form-group">
+                    {{ documento_form.consecutivo.label_tag }}
+                    {{ documento_form.consecutivo }}
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="form-group">
+                    {{ documento_form.id_responsable.label_tag }}
+                    {{ documento_form.id_responsable }}
+
+                </div>
+                <div class="form-group">
+                    {{ documento_form.revisador.label_tag }}
+                    {{ documento_form.revisador }}
+                </div>
+                <div class="form-group">
+                    {{ documento_form.aprobador.label_tag }}
+                    {{ documento_form.aprobador }}
+                </div>
+                <div class="form-group">
+                    {{ documento_form.revision_documento.label_tag }}
+                    {{ documento_form.revision_documento }}
+                </div>
+                <div class="form-group">
+                    <label for="pdf_document">Adjuntar Documento PDF:</label>
+                    <input type="file" class="form-control" id="pdf_document" name="pdf_document" accept=".pdf" required>
+                </div>
+            </div>
+        </div>
+        <div class="text-center">
+            <button type="submit" class="btn btn-primary">Upload document</button>
+        </div>
+    </form>
+</div>
+
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+      // Extensiones permitidas pasadas desde Django
+      var extensionesPermitidas = {{ extensiones_permitidas|safe }};
+    
+      function verificarExtension(inputId, extensionesPermitidas) {
+        var input = document.getElementById(inputId);
+        input.addEventListener('change', function() {
+          var filePath = input.value;
+          var isExtensionValid = extensionesPermitidas.some(function(ext) {
+            return filePath.endsWith(ext);
+          });
+          // Aplica o remueve clases de Bootstrap basado en si la extensión es permitida
+          if (!isExtensionValid) {
+            input.classList.add('is-invalid'); // Bootstrap clase para indicar un error
+            input.classList.remove('is-valid');
+          } else {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid'); // Bootstrap clase para indicar éxito
+          }
+        });
+      }
+      
+      // Llamar a la función `verificarExtension` para el campo de documento editable con las extensiones .doc y .docx
+      verificarExtension('editable_document', ['.doc', '.docx']);
+      
+      // Llamar a la función `verificarExtension` para el campo de documento PDF con la extensión .pdf
+      verificarExtension('pdf_document', ['.pdf']);
+    });
+    </script>
+
+
+{% endblock content %}

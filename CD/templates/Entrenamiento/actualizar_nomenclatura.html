@@ -1,0 +1,227 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% block title %}update_nomenclature{% endblock title %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 align="center">Actualizar nomenclatura</h1>
+    <form method="post" action="{% url 'update_nomenclature' %}"> 
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-12 d-flex justify-content-between align-items-end mb-3">
+                <div class="flex-grow-1 me-3">
+                    <div class="mb-1">
+                        <div class="form-group">
+                            <label for="documento" class="form-label">Nomenclatura:</label>
+                            <select class="form-control" name="nomenclatura" id="nomenclatura">
+                                <option value="">Seleccione una nomenclatura</option>
+                                {% for nomenclatura in nomenclaturas %}
+                                    <option value="{{ nomenclatura }}">{{ nomenclatura }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <button type="button" id="mostrar-form-puesto-btn" class="btn btn-info mb-2">Agregar descripción de puesto</button>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="border p-3 h-5" style="max-height: 400px; overflow-y: auto;">
+                    <ul id="usuarios-lista" class="list-group mb-3" style="display: none;">
+                        <h5>Usuarios Seleccionados</h5>
+                    </ul>
+                    <div id="contenedor-selects"></div>
+                    <h4 id="usuarios-titulo" style="display: none;">Usuarios</h4>
+                    <ul id="usuarios-lista2" class="list-group mb-3" style="display: none;"></ul>
+                </div>
+            </div>
+
+            <div class="col-12 mt-3">
+                <button type="submit" id="enviar-usuarios-btn" name="action" value="sign" class="btn btn-primary w-100">Agregar</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+
+<script>
+    $(document).ready(function() {
+        var contadorSelects = 0; // Contador para el ID de los select adicionales
+        var puestosSeleccionados = [];
+        var indiceUsuarioActual = 0;
+    
+        var usuariosActivos = [
+            {% for usuario in usuarios_activos %}
+                ["{{ usuario.user.first_name }}", "{{ usuario.user.last_name }}"],
+            {% endfor %}
+        ].map(function(usuario) {
+            return [usuario[0], usuario[1]];
+        });
+    
+        function actualizarOpcionesDisponibles() {
+            $('.puesto').each(function() {
+                var selectActual = $(this);
+                var opcionActual = $(this).val();
+    
+                // Habilitar todas las opciones primero
+                $(this).find('option').prop('disabled', false);
+    
+                // Luego deshabilitar las que ya están seleccionadas excepto la actualmente seleccionada en este select
+                puestosSeleccionados.forEach(function(puesto) {
+                    if (puesto !== opcionActual) {
+                        selectActual.find('option[value="' + puesto + '"]').prop('disabled', true);
+                    }
+                });
+            });
+        }
+    
+        $('#mostrar-form-puesto-btn').click(function() {
+            var selectId = 'puesto' + contadorSelects;
+            var infoId = 'info' + contadorSelects;
+        
+            // Agregar nuevo select con su contenedor de información y un botón para quitarlo
+            var nuevoSelect = `<div class="mb-3" id="contenedor-${selectId}">
+                <label class="form-label">Descripción de Puesto:</label>
+                <select class="form-select puesto" id="${selectId}">
+                    <option value="" selected disabled>Seleccionar Puesto</option>
+                    {% for puesto in puestos %}
+                    <option value="{{ puesto }}">{{ puesto }}</option>
+                    {% endfor %}
+                </select>
+                <div id="${infoId}" class="puesto-info" style="display:none;">
+                    <h4></h4>
+                    <ul id="usuarios-lista" class="list-group"></ul>
+                </div>
+                <button type="button" class="btn btn-danger remove-puesto" data-target="#contenedor-${selectId}">Quitar Puesto</button>
+            </div>`;
+            $('#contenedor-selects').append(nuevoSelect);
+            contadorSelects++;
+                // Agregar manejador de eventos change
+            $('#' + selectId).change(function() {
+                var puestoSeleccionado = $(this).val();
+                obtenerUsuariosPorPuesto(puestoSeleccionado, infoId);
+            });
+            actualizarOpcionesDisponibles();
+        });
+
+        $('#contenedor-selects').on('click', '.remove-puesto', function() {
+            var targetId = $(this).data('target');
+            var puestoARemover = $(targetId + ' select').val();
+    
+            // Remover el puesto de la lista de puestos seleccionados
+            puestosSeleccionados = puestosSeleccionados.filter(p => p !== puestoARemover);
+    
+            $(targetId).remove();
+            actualizarOpcionesDisponibles();
+        });
+
+        $('#contenedor-selects').on('change', '.puesto', function() {
+            var puestoSeleccionado = $(this).val();
+            var puestoAnterior = $(this).data('ultimoSeleccionado');
+    
+            // Actualizar puestos seleccionados
+            if (puestoAnterior) {
+                puestosSeleccionados = puestosSeleccionados.filter(p => p !== puestoAnterior);
+            }
+            puestosSeleccionados.push(puestoSeleccionado);
+            $(this).data('ultimoSeleccionado', puestoSeleccionado);
+            actualizarOpcionesDisponibles();
+        });
+
+        function obtenerUsuariosPorPuesto(puesto, infoId) {
+            $.ajax({
+                url: '{% url 'ajax_puesto_nomenclatura' %}',
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                data: {
+                    puesto: puesto
+                },
+                success: function(data) {
+                    var contenedor = $('#' + infoId);
+                    contenedor.find('h3').text('Descripción de ' + puesto);
+                    var lista = contenedor.find('ul');
+                    lista.empty();
+                    data.nombres_puesto.forEach(function(nombre) {
+                        lista.append('<li class="list-group-item">' + nombre + '</li>');
+                    });
+                    contenedor.show();
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error al obtener usuarios:', error);
+                }
+            });
+        }
+
+        $('#enviar-usuarios-btn').click(function(event) {
+            
+            var usuarios = []; // Array para almacenar nombres de usuarios
+
+            // Recoge todos los nombres de la lista usuarios-lista
+            $('#usuarios-lista li').each(function() {
+                var nombre = $(this).text().trim();
+                if (nombre) usuarios.push(nombre);
+            });
+            
+            // Recoge todos los nombres de la lista usuarios-lista2
+            $('#usuarios-lista2 li').each(function() {
+                var nombre = $(this).text().trim();
+                if (nombre) usuarios.push(nombre);
+            });
+        
+            // Obtener el valor actualizado de la nomenclatura
+            var nomenclatura = $('#nomenclatura').val();
+        
+            // Validar si hay usuarios seleccionados
+            if (usuarios.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Advertencia',
+                    text: 'Por favor, seleccione al menos un usuario para el entrenamiento.'
+                });
+                return;
+            }
+
+            // Validar si hay una nomenclatura seleccionada
+            if (!nomenclatura) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Advertencia',
+                    text: 'Por favor, seleccione una nomenclatura.'
+                });
+                return;
+            }
+
+            // Si todas las validaciones pasan, enviar los datos con AJAX
+            var usuariobool = 'true';
+            $.ajax({
+                url: '{% url "update_nomenclature" %}', // Asegúrate que esta URL es correcta
+                type: 'POST',
+                data: {
+                    'usuarios[]': usuarios,
+                    'usuariobool': usuariobool,
+                    'nomenclatura': nomenclatura,
+                    'action': 'sign'
+                },
+                traditional: true,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+        
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Hubo un problema al enviar los datos. Inténtelo nuevamente.'
+                    });
+                }
+            });
+        });
+    });
+</script>
+{% endblock content %}

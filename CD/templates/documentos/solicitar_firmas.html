@@ -1,0 +1,171 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% block title %}Solicitar Firmas{% endblock title %}
+
+
+
+{% block content %}
+
+
+
+<div class="container mt-5">
+    <h2 class="mb-4 text-center">Request Signatures</h2>
+    <form method="POST" enctype="multipart/form-data" action = "{% url "solicitar" %}" class="needs-validation" novalidate>
+        {% csrf_token %}
+        <div class="row">
+          {% if form.errors %}
+            <ul>
+                {% for field in form %}
+                {% for error in field.errors %}
+                    <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                <li><strong>Error:</strong> {{ error }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+            <div class="col-md-6 mb-3">
+                <div class="form-group">
+                    {{ documento_form.id_plantilla.label_tag }}
+                    {{ documento_form.id_plantilla }}
+                </div>
+
+                <div class="form-group">
+                    <label for="editable_document">Adjuntar Documento:</label>
+                    <input type="file" class="form-control" id="editable_document" name="editable_document" accept=".docx, .doc" required>
+                </div>
+             
+                <div class="form-group">
+                    {{ documento_form.comentarios.label_tag }}
+                    {{ documento_form.comentarios }}
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="form-group">
+                    {{ documento_form.id_responsable.label_tag }}
+                    <select id="Autor" name="autor" class="form-control">
+                        <!-- Opciones serán añadidas por JavaScript -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    {{ documento_form.revisador.label_tag }}
+                    <select id="Liberador" name="revisador" class="form-control">
+                        <!-- Opciones serán añadidas por JavaScript -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    {{ documento_form.aprobador.label_tag }}
+                    <select id="Aprobador" name="aprobador" class="form-control">
+                        <!-- Opciones serán añadidas por JavaScript -->
+                    </select>
+                </div>
+                
+            </div>
+        </div>
+        <div class="text-center">
+            <button type="submit" class="btn btn-primary">Request release</button>
+        </div>
+    </form>
+</div>
+
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+      // Extensiones permitidas pasadas desde Django
+      var extensionesPermitidas = {{ extensiones_permitidas|safe }};
+    
+      function verificarExtension(inputId, extensionesPermitidas) {
+        var input = document.getElementById(inputId);
+        input.addEventListener('change', function() {
+          var filePath = input.value;
+          var isExtensionValid = extensionesPermitidas.some(function(ext) {
+            return filePath.endsWith(ext);
+          });
+          // Aplica o remueve clases de Bootstrap basado en si la extensión es permitida
+          if (!isExtensionValid) {
+            input.classList.add('is-invalid'); // Bootstrap clase para indicar un error
+            input.classList.remove('is-valid');
+          } else {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid'); // Bootstrap clase para indicar éxito
+          }
+        });
+      }
+      
+      // Llamar a la función `verificarExtension` para el campo de documento editable con las extensiones .doc y .docx
+      verificarExtension('editable_document', ['.doc', '.docx']);
+      
+
+    });
+
+
+
+    $(document).ready(function() {
+        $('select[name="id_plantilla"]').change(function() {
+            var idPlantilla = $(this).val();
+            console.log("ID de la plantilla seleccionada:", idPlantilla);
+    
+            $.ajax({
+                url: '{% url "ajax_filtrar" %}',  
+                method: 'GET',
+                data: {
+                    'tipo_de_archivo': idPlantilla
+                },
+                dataType: 'json',
+                success: function (data) {
+                    console.log(data);
+                    $('#Liberador').empty();  
+                    $('#Aprobador').empty();
+                    $.each(data.liberadores, function(key, value) {
+                        $('#Liberador').append($('<option></option>').attr('value', value.id).text(value.nombre_completo));
+                    });
+                    $.each(data.aprobadores, function(key, value) {
+                        $('#Aprobador').append($('<option></option>').attr('value', value.id).text(value.nombre_completo));
+                    });
+                    // Suponiendo que tienes un campo de texto o un span para el autor
+                    $('#Autor').empty().append($('<option></option>').attr('value', data.autor_id).text(data.autor));
+                    
+                    // Obtener los valores de los selectores después de la actualización del DOM
+                    var selectedRevisador = $('#Liberador').val();  
+                    var selectedAprobador = $('#Aprobador').val();  
+                    console.log("ID de la selectedRevisador seleccionada:", selectedRevisador);
+                    console.log("ID de la selectedAprobador seleccionada:", selectedAprobador);
+                    
+                    // Llamar a la función AJAX con los valores actualizados
+                    $.ajax({
+                        url: '{% url "ajax_filtrar" %}',  
+                        method: 'GET',
+                        data: {
+                            'tipo_de_archivo': idPlantilla,
+                            'selected_revisador': selectedRevisador,
+                            'selected_aprobador': selectedAprobador
+                        },
+                        dataType: 'json',
+                        success: function (data) {
+                            // Manejar la respuesta de la segunda llamada AJAX
+                            
+
+                        }
+                    });
+                }
+            });
+        });
+
+    });
+    
+    
+    
+
+
+
+   
+
+
+    </script>
+
+
+
+{% endblock content %}

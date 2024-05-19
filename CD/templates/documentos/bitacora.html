@@ -1,0 +1,91 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% block title %}Logbook{% endblock title %}
+
+
+
+{% block content %}
+
+<div class="container mt-5">
+    <h2 align = "center">BITÁCORA</h2>
+    <div class="row mb-4 mt-5">
+        <div class="col">
+            <div class="input-group mb-2">
+            <input type="text" class="form-control" placeholder="Ingrese nombre del documento">
+            <div class="input-group-append">
+                <button type="submit" name="action" value="search" class="btn btn-success">Buscar <i class='bx bx-search'></i></button>
+            </div>
+        </div>
+        </div>
+        <div class="col">
+            <select class="form-control">
+                <option value="">DEPARTAMENTO/LINEA</option>
+
+                {% for area in areas  %}         
+                <option value="{{area}}">{{area}}</option>
+                {% endfor %}
+
+            </select>
+        </div>
+        <div class="col">
+            <select class="form-control">
+                <option value="">TIPO DE PLANTILLA</option>
+                {% for plantilla in plantillas  %}         
+                <option value="{{plantilla}}">{{plantilla}}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col">
+            <select class="form-control">
+                <option value="">ESTADO</option> 
+                {% for estado in estados  %}         
+                <option value="{{estado}}">{{estado}}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <table id="bitacoraTable" class="table table-striped table-bordered" style="width:100%">
+        <thead>
+            <tr>
+                <th>Id Documento</th>
+                <th>Nombre del documento</th>
+                <th>Plantilla</th>
+                <th>Línea</th>
+                <th>Área</th>
+                <th>Responsable</th>
+                <th>Revisor</th>
+                <th>Aprobador</th>
+                <th>Estado</th>
+                <th>Finalización</th>
+            </tr>
+            </tr>
+        </thead>
+        <tbody>
+            {% for doc in documentos %}
+            <tr>
+                <td>{{ doc.id }}</td>
+                <td>{{ doc.nombre_del_documento }}</td>
+                <td>{{ doc.plantilla_nombre }}</td>
+                <td>{{ doc.linea_nombre }}</td>
+                <td>{{ doc.area }}</td>
+                <td>{{ doc.nombre_responsable }}</td>
+                <td>{{ doc.nombre_revisor }}</td>
+                <td>{{ doc.nombre_aprobador }}</td>
+                <td>{{ doc.estado }}</td>
+                <td>
+                    {{ doc.fecha_con_texto }}
+                </td>
+            </tr>
+            {% endfor %}
+            
+        </tbody>
+    </table>
+</div>
+
+<script>
+$(document).ready(function() {
+    $('#bitacoraTable').DataTable();
+});
+</script>
+
+{% endblock content %}

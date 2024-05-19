@@ -1,0 +1,144 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% block title %}Aprobar Documento{% endblock title %}
+
+{% block content %}
+
+
+<div class="container">
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+    <h2 align="center">Aprobar documento</h2>
+    <div class="row">
+        <div class="col-md-12 mb-3">
+            <label for="reviewInput">Revisar:</label>
+            <div class="input-group">
+                <select class="form-select" id="reviewInput" name="reviewInput">
+                    {% for documento in documentos %}
+                    <option value="{{documento.nombre_documento}}" >  <!-- Solo el nombre del archivo -->
+                        {{documento.nombre_documento}}
+                    </option>
+                    {% endfor %}
+                </select>                              
+                <div class="input-group-append">
+                    <button type="button" name="action" value="search" class="btn btn-success">Buscar <i class='bx bx-search'></i></button>                  
+                </div>
+            </div>
+        </div>
+        <div class="col-md-5">
+            <div class="embed-responsive embed-responsive-16by9">
+                <iframe class="embed-responsive-item"   width="450" height="500"></iframe>
+            </div>
+        </div>
+        <div class="col-md-7">
+                <div class="container">
+                    <table class="table">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Línea</th>
+                                <th scope="col">Plantilla</th>
+                                <th scope="col">Consecutivo</th>
+                                <th scope="col">Revisión</th>
+                                <th scope="col">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for documento in documentos %}
+                            <tr>
+                                <td>{{ documento.nombre_documento }}</td>
+                                <td>{{ documento.codigo_linea }}</td>
+                                <td>{{ documento.codigo_plantilla }}</td>
+                                <td>{{ documento.consecutivo_format }}</td>
+                                <td>{{ documento.revision_documento }}</td>
+                                <td>{{ documento.estado }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        
+                    </table>
+                </div>
+                <div class="form-group">
+                    <label for="comment">Comentario:</label>
+                    <textarea class="form-control" id="comment" name="comment" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="fileUpload">Arrastra el archivo editado aquí</label>
+                    <input type="file" class="form-control" id="fileUpload" name="fileUpload">
+                </div>
+                <br>
+                <!-- Botones Firmar y Rechazar -->
+                <button type="submit" class="btn btn-primary" name="action" value="sign">
+                    Firmar <i class="fas fa-check"></i>
+                </button>
+                <button type="submit" class="btn btn-danger" name="action" value="reject">
+                    Rechazar <i class="fas fa-times"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    // Espera a que el documento esté listo
+    $(document).ready(function () {
+        // Obtén el ID del documento seleccionado al cargar la página
+        var idDocumento = $('select[name="reviewInput"]').val().trim();
+        console.log(idDocumento);
+        
+        // Envía el valor inicial a través de AJAX
+        enviarValorAjax(idDocumento);
+        
+        // Agrega un evento de cambio al campo de selección
+        $('select[name="reviewInput"]').change(function () {
+            // Obtén el ID del documento seleccionado
+            var idDocumento = $(this).val();
+            
+            // Envía el valor a través de AJAX
+            enviarValorAjax(idDocumento);
+        });
+        
+        // Función para enviar el valor a través de AJAX
+        function enviarValorAjax(idDocumento) {
+            // Objeto de datos a enviar
+
+            var data = {
+                'id_documento': idDocumento,
+                'csrfmiddlewaretoken': '{{ csrf_token }}' // Agrega el token CSRF
+            };
+            
+            // Realiza la solicitud AJAX
+            $.ajax({
+                url: '{% url "get-document-url" %}',
+                type: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}' // Agrega el token CSRF
+                },
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (data) {
+                    console.log(data); // Haz algo con la respuesta si es necesario
+
+                 
+                    // Obtén el iframe
+                    var iframe = $('.embed-responsive-item');
+
+                    // Establece la URL del documento PDF en el src del iframe
+                    iframe.attr('src', data.url);
+                },
+                error: function (error) {
+                    console.error('Error:', error);
+                }
+            });
+        }
+    });
+</script>
+
+
+
+
+
+
+{% endblock content %}

@@ -1,0 +1,94 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Block Document{% endblock title %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center">DOCUMENTOS BLOQUEADOS</h2>
+    <div class="form-group mt-4">
+        <label for="nomenclatura">Nomenclatura:</label>
+        <select id="nomenclatura" class="form-control">
+            <!-- Opciones del select aquí -->
+            {% for documento in documentos_bloqueados %}
+                <option value="{{ documento.nomenclatura }}">{{ documento.nomenclatura }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <br>
+    <br>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Nomenclatura</th>
+                <th>Nombre</th>
+                <th>Fecha</th>
+                <th>Días Transcurridos</th>
+                <th>Intentos de descarga para cambio</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for documento in documentos_bloqueados %}
+                <tr>
+                    <td>{{ documento.nomenclatura }}</td>
+                    <td>{{ documento.nombre }}</td>
+                    <td>{{ documento.fecha }}</td>
+                    <td>{{ documento.dias_transcurridos_in_days }}</td>
+                    <td>{{ documento.intentos_descarga }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="d-flex justify-content-center mt-4">
+        <button id="desbloquear-btn" class="btn btn-danger">Desbloquear</button>
+    </div>
+</div>
+
+
+<script>
+document.getElementById('desbloquear-btn').addEventListener('click', function() {
+    const seleccion = document.getElementById('nomenclatura').value;
+    Swal.fire({
+        title: '¿Está segur@ de que desea desbloquear el documento?',
+        text: "El usuario ya no podrá subir sus cambios al sistema.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, desbloquear',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const url = `{% url 'ajax_nomenclatura_desbloquear' 'NOMENCLATURA' %}`.replace('NOMENCLATURA', seleccion);
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            }).then(response => {
+                if (response.ok) {
+                    Swal.fire(
+                        'Desbloqueado!',
+                        `El documento '${seleccion}' ha sido desbloqueado.`,
+                        'success'
+                    ).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire(
+                        'Error!',
+                        'Hubo un problema al desbloquear el documento.',
+                        'error'
+                    );
+                }
+            });
+        }
+    });
+});
+</script>
+
+
+
+{% endblock content %}

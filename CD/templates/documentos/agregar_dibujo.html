@@ -1,0 +1,52 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% block title %}Firmar un documento{% endblock title %}
+
+{% block content %}
+
+<h2 align="center">Conversión de doc a pdf y despues marca de agua</h2>
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Save As Example</title>
+</head>
+<body>
+    <button onclick="saveFile()">Descargar Archivo</button>
+
+    <script>
+        function saveFile() {
+            /*
+            // Crear un elemento a
+            var element = document.createElement('a');
+
+            // Contenido del archivo
+            var fileContent = "Contenido del archivo que quieres guardar"; // contenido en formato string
+            var blob = new Blob([fileContent], { type: 'text/plain' }); // Crear un objeto Blob con el contenido
+
+            // Crear un URL para el Blob
+            element.href = URL.createObjectURL(blob);
+
+            // Configurar el nombre de archivo para descargar
+            element.download = "archivo_guardado.txt";
+
+            // Añadir el elemento a la página y hacer click
+            document.body.appendChild(element);
+            element.click();
+
+            // Limpiar y remover el elemento
+            document.body.removeChild(element);
+            */
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+{% endblock content %}

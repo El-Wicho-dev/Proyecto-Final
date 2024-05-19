@@ -1,0 +1,230 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% block title %}Buscar Documento{% endblock title %}
+
+
+
+{% block content %}
+
+
+
+<div class="container mt-5">
+    <h2 align= "center">Buscar documento</h2>
+    <form>
+        <form method="GET" action = "{% url 'buscar_documento' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                {{ plantila_form.nombre.label_tag }}
+                <select name="{{ plantila_form.nombre.html_name }}" class="form-control">
+                    {% for value, label in plantila_form.nombre.field.choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+    
+            </div>
+            <div class="form-group">
+                {{ area_form.area.label_tag }}
+                <select name="{{ area_form.area.html_name }}" class="form-control">
+                    {% for value, label in area_form.area.field.choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                {{ linea_form.nombre_linea.label_tag }}
+                <select name="{{ linea_form.nombre_linea.html_name }}" class="form-control">
+                    {% for value, label in linea_form.nombre_linea.field.choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        <div class="form-group">
+            <label for="nombreDocumento2">Nombre del documento actual:</label>
+            <select class="form-control" id="nombreDocumento2" name="name_document">
+             
+            </select>
+            
+        </div>
+        <br>
+        <button type="submit" id= "buscar_doc" name="action" value="search" class="btn btn-primary">Ver documento <i class='bx bx-search-alt-2'></i></button>
+
+    </form>
+</div>
+
+
+<script>
+    
+    $(document).ready(function() {
+
+        var plantillaselect = $('select[name="nombre"]');
+        var areasSelect = $('select[name="area"]');
+        var lineaProcesoSelect = $('select[name="nombre_linea"]');
+        var documentosSelect = $('#nombreDocumento2');
+
+        function realizarPeticionAjax(url, metodo, datos, onSuccess) {
+            $.ajax({
+                url: url,
+                method: metodo,
+                data: datos,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                success: onSuccess,
+                error: function(jqXHR, textStatus, errorThrown) {
+                    // Uso de SweetAlert para mostrar el error
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Algo salió mal!',
+                        footer: 'Error: ' + textStatus + ' ' + errorThrown + '\n' + jqXHR.responseText
+                    });
+                    console.error("Error en la petición AJAX:", textStatus, errorThrown);
+                    console.error("Respuesta del servidor:", jqXHR.responseText);
+                }
+            });
+        }
+        
+
+
+
+        $('select[name="nombre"]').change(function() {
+            var nombre_plantilla_seleccionada = $(this).val();
+            console.log(nombre_plantilla_seleccionada);
+        
+
+            realizarPeticionAjax("{% url 'obtener_plantilla_buscar' %}", 'GET', {
+                'nombre': nombre_plantilla_seleccionada
+            }, function(data) {
+                console.log(data);
+
+                areasSelect.empty();
+                areasSelect.append('<option value="">Seleccione un área</option>');
+                $.each(data.areas, function(index, area) {
+                    var option = '<option value="' + area.id + '">' + area.area + '</option>';
+                    areasSelect.append(option);
+                });
+                  // Llamar a la función para actualizar documentos
+            });
+        });
+
+
+        $('select[name="area"]').change(function() {
+            var areaSeleccionada = $(this).val();
+            realizarPeticionAjax("{% url 'obtener_areas_buscar' %}", 'GET', {
+                'areaSeleccionada': areaSeleccionada
+            }, function(data) {
+                lineaProcesoSelect.empty();
+                lineaProcesoSelect.append('<option value="">Seleccione la linea</option>');
+
+                if (data.lineas) {
+                    $.each(data.lineas, function(index, linea) {
+                        var option = '<option value="' + linea.id + '">' + linea.linea + '</option>';
+                        lineaProcesoSelect.append(option);
+                    });
+                }
+
+                console.log("Datos recibidos: ", data);
+            });
+        });
+
+
+        $('select[name="nombre_linea"]').change(function() {
+            
+            realizarPeticionAjax("{% url 'obtener_lineas_buscar' %}", 'GET', {
+                'lineaSeleccionada': lineaProcesoSelect.find('option:selected').text(),
+                'plantillaSeleccionada': plantillaselect.val(),
+                'areaSeleccionada': areasSelect.find('option:selected').text(),
+            }, function(data) {
+                documentosSelect.empty();
+                documentosSelect.append('<option value="">Seleccione un Documento</option>');
+
+                if (data.documentos) {
+                    $.each(data.documentos, function(index, documento) {
+                        var option = '<option value="' + documento.id + '">' + documento.documento + '</option>';
+                        documentosSelect.append(option);
+                    });
+                }
+    
+                console.log("Datos recibidos: ", data);
+            });
+        });
+
+
+
+        $('#buscar_doc').click(function(e) {
+            e.preventDefault();  // Previene la recarga de la página que causaría el botón de submit
+        
+            // Obtener el valor del campo de texto al hacer clic en el botón
+
+            
+            // Obtener el valor del campo de texto y los campos de selección al hacer clic en el botón
+            var lineaSeleccionada = lineaProcesoSelect.find('option:selected').text();
+            var plantillaSeleccionada = plantillaselect.val();
+            var areaSeleccionada = areasSelect.find('option:selected').text();
+            var nombreDocumento = documentosSelect.find('option:selected').text();
+
+           
+
+                // Imprimir valores para depuración
+            console.log("Línea seleccionada: ", lineaSeleccionada);
+            console.log("Plantilla seleccionada: ", plantillaSeleccionada);
+            console.log("Área seleccionada: ", areaSeleccionada);
+            console.log("Nombre del documento: ", nombreDocumento);
+
+
+            // Validar si el nombre del documento es "Seleccione un Documento" o está vacío
+            if (nombreDocumento === 'Seleccione un Documento' || nombreDocumento.trim() === '') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Por favor, seleccione un documento válido.'
+                });
+                return;  // Detener la ejecución si la validación falla
+            }
+      
+            
+            // Crear el objeto con los datos a enviar
+            // Crear el objeto con los datos a enviar
+                var datos = {
+                    'lineaSeleccionada': lineaSeleccionada,
+                    'plantillaSeleccionada': plantillaSeleccionada,
+                    'areaSeleccionada': areaSeleccionada,
+                    'nombreDocumento': nombreDocumento,
+                    'action': 'search'
+                };
+        
+            console.log(datos);  // Mostrar los datos en la consola para depuración
+        
+            // Llamar a la función que realiza la petición AJAX, pasando la URL y los datos
+            realizarPeticionAjax("{% url 'buscar_documento' %}", 'GET', datos, function(data) {
+                console.log("Respuesta del servidor:", data);
+                // Aquí puedes agregar código para manejar la respuesta, como actualizar el DOM
+            });
+        });
+        
+
+
+
+    
+        // Función para obtener el token CSRF desde las cookies
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+    });
+
+</script>
+
+
+{% endblock content %}

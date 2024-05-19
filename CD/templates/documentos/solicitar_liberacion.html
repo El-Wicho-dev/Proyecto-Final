@@ -1,0 +1,119 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% block title %}Home{% endblock title %}
+
+{% block content %}
+
+<h3 align="center">Liberar Documento</h3>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12 mb-3">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <label for="documento">Revisar:</label>
+                <div class="input-group">
+                    <select class="form-select" id="documento" name="reviewInput">
+                        {% for documento in documentos %}
+                        <option value="{{ documento.Nombre_Documento }}">  <!-- Solo el nombre del archivo -->
+                            {{ documento.Nombre_Documento }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <button type="button" class="btn btn-success" onclick="fetchDocumentDetails()">Buscar <i class='bx bx-search'></i></button>
+                </div>
+            </form>
+        </div>
+        <div class="col-md-5">
+            {% if doc_pdf %}
+            <div class="embed-responsive embed-responsive-16by9">
+                <iframe class="embed-responsive-item" src="{{ doc_pdf }}" width="450" height="500"></iframe>
+            </div>
+            {% else %}
+            <p>No hay documentos para mostrar</p>
+            {% endif %}
+        </div>
+        <div class="col-md-7">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            Detalles del Documento
+                        </div>
+                        {% if doc_info %}
+                        <div class="card-body">
+                            <h5 class="card-title"></h5>
+                            <p class="card-text"><strong>Revisador: {{ doc_info.Reviso }} </strong></p>
+                            <p class="card-text"><strong>Nombre del documento: {{ doc_info.Nombre_Documento }}</strong></p>
+                            <p class="card-text"><strong>Rev Plantilla: {{ doc_info.Rev_Plantilla }}</strong></p>
+                            <p class="card-text"><strong>Area: {{ doc_info.Area }}</strong></p>
+                            <p class="card-text"><strong>Linea: {{ doc_info.Linea }}</strong></p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            Detalles del Autor
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text"><strong>Autor: {{ doc_info.Responsable }} </strong></p>
+                            <p class="card-text"><strong>Aprobador por: {{ doc_info.Autorizo }}</strong></p>
+                            <p class="card-text"><strong>Rev del documento: {{ doc_info.Rev_Documento }}</strong></p>
+                            <p class="card-text"><strong>Tipo de documento: {{ doc_info.Plantilla_Nombre }}</strong></p>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p>No se encontró información del documento.</p>
+                    {% endif %}
+                </div>
+                <div class="col-md-12">
+                    <form method="POST" action="{% url 'liberar-documento' %}">
+                        {% csrf_token %}
+                        <!-- Botones Firmar y Rechazar -->
+                        <br>
+                        <button type="submit" class="btn btn-success" name="action" value="sign">
+                            Firmar <i class="fas fa-check"></i>
+                        </button>
+                        <button type="submit" class="btn btn-danger" name="action" value="reject">
+                            Rechazar <i class="fas fa-times"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    console.log("hola como estas");
+    
+    fetchDocumentDetails();
+
+    function fetchDocumentDetails() {
+        var selectedDoc = $('#documento').val();
+        console.log("OBTENER EL VALOR: " + selectedDoc);  // Verificar que se captura el valor correctamente
+        
+        // Obtener el token CSRF desde el HTML
+        var csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        $.ajax({
+            url: '{% url "document_details_liberar" %}',
+            type: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken  // Incluir el token CSRF en los encabezados
+            },
+            data: {
+                'nombre_documento': selectedDoc
+            },
+            dataType: 'json',
+            success: function(data) {
+                console.log(data);  // Verificar que los datos llegan correctamente
+                // Aquí debes actualizar los elementos de tu carta basado en 'data'
+            },
+            error: function(error) {
+                console.log('Error:', error);
+            }
+        });
+    }
+</script>
+
+{% endblock content %}

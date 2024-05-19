@@ -1,0 +1,123 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Delete Document{% endblock title %}
+
+{% block content %}
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="container mt-5">
+        <h2 align="center">Delete document</h2>
+        <div class="row">
+            <div class="col-md-12 mb-4">
+                <label for="reviewInput">Revisar:</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="reviewInput" value="{{ review_input_value }}" name="reviewInput" placeholder="Ingresa el nombre de la nomenclatura">
+                    <div class="input-group-append">
+                        <button type="submit" name="action" value="search" class="btn btn-success">Buscar <i class='bx bx-search'></i></button>
+                    </div>
+                </div>
+            </div>
+            <br><br>
+            
+            {% if pdf_url  %}
+                
+            <div class="col-md-6 mt-5">
+                <div class="embed-responsive embed-responsive-16by9">
+                    <iframe class="embed-responsive-item w-100" src="{{ pdf_url }}" height="850"></iframe>
+                </div>
+            </div>
+            {% else %}
+             <p> no ahi documento con ese nomenclatura</p>
+            {% endif%}
+
+            <div class="col-md-6 mt-5" >
+                <div class="container">
+                    <h3>Entrenados:</h3>
+                    <table class="table">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Calificacion</th>
+                                <th scope="col">Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entrenamiento in entrenamientos %}
+                            <tr>
+                                <td>{{ entrenamiento.nombre_completo}}</td>
+                                <td>{{ entrenamiento.calificacion }}</td>
+                                <td>{{ entrenamiento.fecha }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <h3>Historial:</h3>
+                    <table class="table">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Fecha</th>
+                                <th scope="col">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for historial in historial_aprobacion %}
+                            <tr>
+                                <td>{{ historial.nombre_completo }}</td>
+                                <td>{{ historial.fecha }}</td>
+                                <td>{{ historial.accion }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% if pdf_url %}
+        <br>
+        <div class="text-center">
+            <button type="submit" class="btn btn-danger" name="action" value="reject" onclick="return confirmDeletion();">
+                Delete Document <i class="bi bi-file-earmark-x"></i>
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</form>
+
+
+
+
+<script>
+    $(document).ready(function() {
+        $("#reviewInput").autocomplete({
+            source: function(request, response) {
+                $.ajax({
+                    url: "{% url 'autocomplete_nomenclatura' %}",
+                    dataType: "json",
+                    data: {
+                        term: request.term
+                    },
+                    success: function(data) {
+                        response(data);
+                    }
+                });
+            },
+            minLength: 2,
+        }).autocomplete("instance")._renderItem = function(ul, item) {
+            return $("<li>")
+                .addClass("dropdown-item")  // Usando clases de Bootstrap
+                .append(item.label)
+                .appendTo(ul);
+        };
+    });
+    
+    </script>
+    
+
+
+    
+
+
+{% endblock content %}

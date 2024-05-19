@@ -1,0 +1,84 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% block title %}Home{% endblock title %}
+
+{% block content %}
+
+<div class="container mt-5">
+    <div class="mb-3">
+    <form method = 'POST' class="needs-validation" novalidate>
+                {% csrf_token %}
+                <label for="lineaArea2" class="form-label">Encuesta a realizar para validar entrenamiento</label>
+                <div class="input-group">
+                    <select class="form-select" id="lineaArea2" name="nombre_documento" style="width: 10%;">
+                        {% for documento in documentos  %}
+                        <option  value = "{{documento.Nombre_Documento}}">{{documento.Nombre_Documento}}</option>
+                        {% endfor %}
+                    </select>
+                    <span class="input-group-text" >
+                        <box-icon type='solid' name='file-doc' style='width: 24px; height: 24px;'></box-icon>
+                    </span>
+                </div>
+            </div>
+            <br>
+            <br>
+            <div class="mb-3">
+                <label for="lineaArea" class="form-label">¿A qué línea/Área pertenece este documento?</label>
+                <select class="form-select" id="lineaArea" name="area_seleccionada">
+                    {% for area in areas  %}
+                    <option  value = "{{area}}">{{area}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="tipoDocumento" class="form-label">¿Qué tipo de documento es?</label>
+                <select class="form-select" id="tipoDocumento" name="plantilla_seleccionada">
+                    {% for plantilla in plantillas  %}
+                    <option  value = "{{plantilla}}">{{plantilla}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="numeroRevision" class="form-label">¿Qué número de revisión tiene?</label>
+                <select class="form-select" id="numeroRevision" name = "revision_documento">
+                    {% for rev_documento in rev_documentos  %}
+                    <option  value = "{{rev_documento}}">{{rev_documento}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="descripcion" class="form-label">¿En qué consiste?</label>
+                <textarea class="form-control" id="descripcion" name = "en_que_consiste" rows="3" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="autorizacion" class="form-label">¿Quién autorizó el documento?</label>
+                <select class="form-select" id="autorizacion" name = "autor">
+                    {% for nombre_completo in aprobadores  %}
+                    <option  value = "{{nombre_completo}}">{{nombre_completo}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Terminar</button>
+    </form>
+    </div>
+</div>
+
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const form = document.querySelector('form.needs-validation');
+        form.addEventListener('submit', function(event) {
+            const select = document.getElementById('lineaArea2');
+            if (select.value === "") {
+                event.preventDefault();
+                alert('Por favor, selecciona un documento.');
+            }
+        });
+    });
+    
+    </script>
+    
+
+
+{% endblock content %}

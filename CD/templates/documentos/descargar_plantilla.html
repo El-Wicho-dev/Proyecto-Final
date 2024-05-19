@@ -1,0 +1,447 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% block title %}Descargar plantilla {% endblock title %}
+
+<style>
+    /* Ajustes de estilo para el switch */
+    .form-switch {
+      display: flex;
+      align-items: center; /* Esto asegura que el texto y el switch estén alineados verticalmente */
+      margin-top: 10px; /* Ajusta este valor según necesites para mover el switch hacia abajo */
+    }
+  
+    .form-check-input {
+      margin-top: 0; /* Ajusta la posición del switch mismo si es necesario */
+      margin-right: 5px; /* Espacio entre el switch y la etiqueta */
+    }
+  
+    .form-check-label {
+      margin-bottom: 0; /* Asegura que no haya margen extra debajo de la etiqueta */
+    }
+  </style>
+  
+
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center">Control de Documentos</h2>
+    <br>
+    <form method="GET">
+        {% csrf_token %}
+        <div class="form-group">
+            {{ plantila_form.nombre.label_tag }}
+            <select name="{{ plantila_form.nombre.html_name }}" class="form-control">
+                {% for value, label in plantila_form.nombre.field.choices %}
+                    <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+
+        </div>
+        <div class="form-group">
+            {{ area_form.area.label_tag }}
+            <select name="{{ area_form.area.html_name }}" class="form-control">
+                {% for value, label in area_form.area.field.choices %}
+                    <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            {{ linea_form.nombre_linea.label_tag }}
+            <select name="{{ linea_form.nombre_linea.html_name }}" class="form-control">
+                {% for value, label in linea_form.nombre_linea.field.choices %}
+                    <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="nombreDocumento">Nombre del documento actual:</label>
+            <div class="input-group mb-3">
+                <input type="text" class="form-control" id="nombreDocumento" placeholder="Ingrese el nombre del documento" aria-label="Nombre del documento" aria-describedby="documentoSwitch" style="display: none;">
+                <select id="nombreDocumentoSelect" class="form-control"></select>    
+                <div class="input-group-append">
+                    <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" type="checkbox" role="switch" id="cb_Nuevo" aria-label="Crear documento nuevo">
+                        <label class="form-check-label" for="cb_Nuevo">Crear documento</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+              
+ 
+        <div class="text-center">
+            <br>
+            <button id="descargar-btn"  type="button" class="btn btn-primary btn-lg">Descargar Plantilla</button>
+        </div>
+    </form>
+</div>
+
+
+
+
+<script>
+    $(document).ready(function() {
+
+        var plantillaselect = $('select[name="nombre"]');
+        var areasSelect = $('select[name="area"]');
+        var lineaProcesoSelect = $('select[name="nombre_linea"]');
+        var checkbox = $('#cb_Nuevo');
+        var nombreDocumentoInput = $('#nombreDocumento');
+        var nombreDocumentoSelect = $('#nombreDocumentoSelect');
+        var nombre_documento = '';
+
+
+
+
+        function realizarPeticionAjax(url, metodo, datos, onSuccess) {
+            $.ajax({
+                url: url,
+                method: metodo,
+                data: datos,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                success: onSuccess,
+                error: function(jqxhr, textStatus, error) {
+                    console.log("Error: " + textStatus + ", " + error);
+                }
+            });
+        }
+
+        $('select[name="nombre"]').change(function() {
+            var nombre_plantilla_seleccionada = $(this).val();
+            console.log(nombre_plantilla_seleccionada);
+
+            if (nombre_plantilla_seleccionada === '5') {
+                nombreDocumentoInput.hide();
+                nombreDocumentoSelect.show();
+                areasSelect.prop('disabled', true);
+                lineaProcesoSelect.prop('disabled', true);
+                checkbox.prop('checked', false);
+                checkbox.prop('disabled', true);
+
+                realizarPeticionAjax("{% url 'obtener_plantilla' %}", 'GET', {
+                    'nombre': nombre_plantilla_seleccionada
+                }, function(data) {
+                    console.log(data);
+            
+                    areasSelect.empty();
+                    areasSelect.append('<option value="">Seleccione un área</option>');
+                    $.each(data.areas, function(index, area) {
+                        var option = '<option value="' + area.id + '">' + area.area + '</option>';
+                        areasSelect.append(option);
+                    });
+            
+                    actualizarDocumentos(data.documentos);
+
+
+                });
+
+
+
+            } else if (nombre_plantilla_seleccionada === '3') {
+                nombreDocumentoSelect.empty();
+                areasSelect.prop('disabled', false);
+                lineaProcesoSelect.prop('disabled', true);
+                checkbox.prop('disabled', false);
+            } else {
+                nombreDocumentoSelect.empty();
+                areasSelect.prop('disabled', false);
+                lineaProcesoSelect.prop('disabled', false);
+                checkbox.prop('disabled', false);
+            }
+
+            realizarPeticionAjax("{% url 'obtener_plantilla' %}", 'GET', {
+                'nombre': nombre_plantilla_seleccionada
+            }, function(data) {
+                console.log(data);
+
+                areasSelect.empty();
+                areasSelect.append('<option value="">Seleccione un área</option>');
+                $.each(data.areas, function(index, area) {
+                    var option = '<option value="' + area.id + '">' + area.area + '</option>';
+                    areasSelect.append(option);
+                });
+
+
+                  // Llamar a la función para actualizar documentos
+            });
+        });
+
+        function actualizarDocumentos(documentos) {
+            nombreDocumentoSelect.empty(); // Asegurando que el select está vacío antes de llenarlo
+            nombreDocumentoSelect.append('<option value="">Seleccione un documento</option>');
+        
+            if (Array.isArray(documentos)) { // Verifica que 'documentos' es un arreglo
+                documentos.forEach(function(documento) {
+                    nombreDocumentoSelect.append('<option value="' + documento.archivo + '">' + documento.archivo + '</option>');
+                });
+            } else {
+                console.error('Los datos recibidos no son un arreglo:', documentos);
+            }
+        }
+        
+                    
+        $('select[name="area"]').change(function() {
+            var areaSeleccionada = $(this).val();
+            realizarPeticionAjax("{% url 'obtener_areas' %}", 'GET', {
+                'areaSeleccionada': areaSeleccionada
+            }, function(data) {
+                lineaProcesoSelect.empty();
+                lineaProcesoSelect.append('<option value="">Seleccione la linea</option>');
+
+                if (data.lineas) {
+                    $.each(data.lineas, function(index, linea) {
+                        var option = '<option value="' + linea.id + '">' + linea.linea + '</option>';
+                        lineaProcesoSelect.append(option);
+                    });
+                }
+
+                console.log("Datos recibidos: ", data);
+            });
+        });
+
+        $('select[name="nombre_linea"]').change(function() {
+            var lineaSeleccionada = $(this).val();
+            var plantillaSeleccionada = plantillaselect.val();
+            var areaSeleccionada = areasSelect.val();
+
+            realizarPeticionAjax("{% url 'obtener_lineas' %}", 'GET', {
+                'lineaSeleccionada': lineaSeleccionada,
+                'plantillaSeleccionada':plantillaSeleccionada,
+                 'areaSeleccionada':areaSeleccionada
+
+            }, function(data) {
+                console.log("Respuesta del servidor:", data);
+            });
+
+
+        
+
+
+
+        });
+
+    
+
+        function documentos_lineas(documentos) {
+            nombreDocumentoSelect.empty(); // Asegurando que el select está vacío antes de llenarlo
+            nombreDocumentoSelect.append('<option value="">Seleccione un documento</option>');
+        
+            if (Array.isArray(documentos)) { // Verifica que 'documentos' es un arreglo
+                documentos.forEach(function(documento) {
+                    nombreDocumentoSelect.append('<option value="' + documento + '">' + documento + '</option>');
+                });
+            } else {
+                console.error('Los datos recibidos no son un arreglo:', documentos);
+            }
+        }
+
+
+        checkbox.change(function() {
+            if ($(this).is(':checked')) {
+                nombreDocumentoInput.val(''); // Establecer el valor del campo de entrada como una cadena vacía
+                var isChecked = $(this).is(':checked'); // Obtener el estado del checkbox
+                var isDisabled = lineaProcesoSelect.prop('disabled');
+                var areaSeleccionada = areasSelect.val();
+                var nombrePlantillaSeleccionada = plantillaselect.val();
+                nombreDocumentoInput.show();
+                nombreDocumentoSelect.hide();
+        
+                console.log("¿La línea está bloqueada? " + isDisabled);
+                console.log("Área seleccionada: " + areaSeleccionada);
+                console.log("Línea de proceso seleccionada: " + lineaProcesoSelect.val());
+        
+                realizarPeticionAjax("{% url 'ajax_checkbox' %}", 'GET', {
+                    'cb_Nuevo': isChecked, // Enviamos el estado del checkbox
+                    'nombrePlantillaSeleccionada': plantillaselect.val(),
+                    'isDisabled': isDisabled,
+                    'areaSeleccionada': areasSelect.val(),
+                    'lineaSeleccionada': lineaProcesoSelect.val()
+                }, function(data) {
+                    console.log("Respuesta del servidor:", data);
+        
+                    // Segunda petición AJAX, puede ser condicional o siempre ejecutarse
+                    realizarPeticionAjax("{% url 'determinar_revicion' %}", 'GET', {
+                        // Aquí los datos que necesitas enviar
+                        'cb_Nuevo': isChecked // Enviamos el estado del checkbox
+                    }, function(response) {
+                        console.log("Respuesta del servidor para la segunda petición:", response);
+                        var nombre_documento = '';
+                        if (data && data.document_name) {
+                            nombre_documento = data.document_name;
+                        }
+                        console.log("Nombre del documento:", nombre_documento);
+                    });
+                });
+            } else {
+                nombreDocumentoInput.val(''); // Establecer el valor del campo de entrada como una cadena vacía
+                nombreDocumentoInput.hide();
+                nombreDocumentoSelect.show();
+            }
+        });
+        
+
+        // Evento change del campo de entrada
+        nombreDocumentoInput.on('change', function() {
+            var nombreDocumento = $(this).val();nombre_doc_SelectedIndexChanged
+            console.log(nombreDocumento);
+        });
+
+        // Evento change del campo de entrada
+        nombreDocumentoSelect.on('change', function() {
+            var nombreDocumento = $(this).val();
+            console.log(nombreDocumento);
+        });
+
+
+        $('#descargar-btn').click(function() {
+            // Verificar la visibilidad del input y obtener el valor correspondiente
+            if (nombreDocumentoInput.is(':visible')) {
+                nombreDocumento = nombreDocumentoInput.val(); // Obtener el valor del input visible
+            } else if (nombreDocumentoSelect.is(':visible')) {
+                nombreDocumento = nombreDocumentoSelect.val(); // Obtener el valor del select
+            }
+
+            var nombrePlantillaSeleccionada = plantillaselect.val();
+            var lineaSeleccionada = lineaProcesoSelect.val();
+            var isChecked = $('#cb_Nuevo').is(':checked');
+
+            if (isChecked === true) {
+                plantilla_completa = nombre_documento
+            }
+            else{
+                plantilla_completa = 'NO ES DOCUMENTO NUEVO'
+            }
+
+        
+            // Verificar si el nombre del documento está vacío
+            if (!nombreDocumento) {
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'Se requiere agregar un nombre o seleccionar un documento.',
+                    icon: 'error',
+                    confirmButtonText: 'Ok'
+                });
+            } else {
+                // Realizar la verificación de documento bloqueado antes de proceder con la descarga
+                $.ajax({
+                    url: '{% url "ajax_blockdoc" %}',
+                    method: 'POST',
+                    data: {
+                        nombreDocumento: nombreDocumento,
+                        nombrePlantillaSeleccionada:nombrePlantillaSeleccionada,
+                        lineaSeleccionada:lineaSeleccionada,
+                        isChecked: isChecked,
+                        plantilla_completa:plantilla_completa
+                    },
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    success: function(response) {
+                        if (response.message) {
+                            // Si el documento está bloqueado, mostrar un mensaje de error
+                            console.log("infomacion que llega: " + response.message);
+                            Swal.fire({
+                                title: 'Error!',
+                                text: response.message, // Accede al mensaje de la respuesta JSON
+                                icon: 'error',
+                                confirmButtonText: 'Ok'
+                            });
+                        } else {
+                            // Si el documento no está bloqueado, proceder con la descarga
+                            realizarDescarga();
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Hubo un error en la solicitud de verificación:', error);
+                    }
+                });
+            }
+        });
+        
+        
+        function realizarDescarga() {
+            var isChecked = $('#cb_Nuevo').is(':checked');
+            var isDisabled = lineaProcesoSelect.prop('disabled');
+            var areaSeleccionada = areasSelect.val();
+            var nombrePlantillaSeleccionada = plantillaselect.val();
+            var lineaSeleccionada = lineaProcesoSelect.val();
+            var nombreDocumento;
+
+
+            // Verificar la visibilidad del input y obtener el valor correspondiente
+            if (nombreDocumentoInput.is(':visible')) {
+                nombreDocumento = nombreDocumentoInput.val(); // Obtener el valor del input visible
+            } else if (nombreDocumentoSelect.is(':visible')) {
+                nombreDocumento = nombreDocumentoSelect.val(); // Obtener el valor del select
+            }
+
+            console.log({
+                isChecked: isChecked,
+                isDisabled: isDisabled,
+                nombrePlantillaSeleccionada: nombrePlantillaSeleccionada,
+                lineaSeleccionada: lineaSeleccionada,
+                nombreDocumento: nombreDocumento
+            });
+            
+            $.ajax({
+                url: '{% url "ajax_btn" %}',
+                method: 'POST',
+                data: {
+                    isChecked: isChecked,
+                    isDisabled: isDisabled,
+                    nombrePlantillaSeleccionada: nombrePlantillaSeleccionada,
+                    lineaSeleccionada: lineaSeleccionada,
+                    nombreDocumento: nombreDocumento
+                },
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                success: function(response) {
+                    if (response.new_file_url && response.new_file_name) {
+                        var nombreDescarga = response.new_file_name;
+                        var fileUrl = response.new_file_url;
+        
+                        var a = document.createElement('a');
+                        a.href = fileUrl;
+                        a.download = nombreDescarga;
+                        document.body.append(a);
+                        a.click();
+                        a.remove();
+                        //location.reload();
+
+                    } else {
+                        console.error('Faltan datos para la descarga:', response);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Hubo un error en la solicitud:', error);
+                }
+            });
+        }
+        
+        
+        // Función para obtener el token CSRF desde las cookies
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+    });
+
+</script>
+
+
+
+
+{% endblock content %}

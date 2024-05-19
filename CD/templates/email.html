@@ -1,0 +1,29 @@
+<!-- templates/emails/correo_ordinario.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ subject }}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f2f2f2; padding: 20px; }
+        .section { background-color: #fff; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+        h1, h2, p { margin: 0 0 10px 0; }
+        a { color: #007bff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="section">
+        <center><h1>{{ factory_name }}</h1></center>
+    </div>
+    <div class="section">
+        <h2>{{ title }}</h2>
+        <p>{{ message }}</p>
+    </div>
+    <div class="section">
+        <h1>Saludos</h1>
+    </div>
+    <p>Haga click <a href="{{ link }}">aquí</a> para acceder a la interfaz</p>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% block title %}update position{% endblock title %}
+
+
+
+{% block content %}
+
+<div class="container mt-5">
+    <h2 align = "center"> Actualizar Puesto </h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Actualizar</button>
+    </form>
+</div>
+
+{% endblock content %}

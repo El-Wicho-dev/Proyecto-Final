@@ -1,0 +1,76 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% block title %}Block User{% endblock title %}
+
+
+<style>
+    .btn-close {
+        /* Ajusta el tamaño del botón */
+        width: 0.5rem; /* Cambia esto según necesites */
+        height: 0.5rem; /* Cambia esto según necesites */
+        
+        /* Ajusta el tamaño del "icono" de cierre dentro del botón */
+        background-size: 0.5rem 0.5rem; /* Cambia esto según necesites */
+    }
+</style>
+
+
+
+{% block content %}
+
+
+
+
+<div class="container mt-5">
+    <h2 align="center" class="mb-4">Bloquear Usuario</h2>
+    <form method="post" class="needs-validation" novalidate>
+        {% csrf_token %}
+        <div class="form-group">
+            <fieldset class="border p-4 rounded">
+                <legend class="w-auto">Perfil del Usuario:</legend>
+                    <div class="mb-3">
+                        <label for="id_no_empleado">Número de Empleado:</label>
+                        <input type="text" name="no_empleado" id="id_no_empleado" value="{{ no_empleado }}" class="form-control">
+                        <input type="hidden" name="user_id" value="{{ usuario_info.id }}">
+
+                    </div>
+                <button type="submit" name="action" value="search" class="btn btn-success">Buscar <i class='bx bx-search'></i></button>
+            </fieldset>
+        </div>
+        <!---
+
+            {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+            -->
+
+
+        {% if puesto_info or usuario_info  %}   
+        <ul class="list-group mt-3">
+            <li class="list-group-item">Nombre Completo: {{ usuario_info.first_name }} {{ usuario_info.last_name }}</li>
+            <li class="list-group-item">Correo: {{ usuario_info.email }}</li>
+            <li class="list-group-item">Puesto: {{ puesto_info.descripcion_general }}</li>
+            <li class="list-group-item">Tipo: {{ puesto_info.tipo }}</li>
+            <li class="list-group-item">Unidad de Negocio: {{ puesto_info.por_unidad_negocio }}</li>
+            <button type="submit" name="action" value="block" class="btn btn-primary mt-3">Bloquear Usuario <i class='bx bx-user-minus'></i></button>
+        </ul>
+    {% endif %}
+    
+</form>
+
+</div>
+    
+
+
+<!-- Tu script de jQuery para escuchar el evento closed.bs.alert -->
+
+
+
+
+
+{% endblock content %}

@@ -1,0 +1,28 @@
+version: '3.8'  # Especifica la versión de Docker Compose utilizada. La versión 3.8 soporta características específicas y es compatible con Docker Engine 19.03.0+.
+
+services:  # Define los servicios, contenedores que formarán parte de tu aplicación.
+  postgres:  # Nombre del servicio para el contenedor de PostgreSQL.
+    image: postgres  # Especifica la imagen de Docker a utilizar para el contenedor, en este caso, la imagen oficial de PostgreSQL.
+    restart: always  # Política de reinicio del contenedor. "always" indica que el contenedor debe reiniciarse siempre.
+    ports:
+      - "5432:5432"  # Mapeo de puertos entre el host y el contenedor. Formato "puertoHost:puertoContenedor". Expone el puerto 5432 del contenedor al puerto 5432 del host.
+    environment:  # Define variables de entorno para el contenedor.
+      - DATABASE_HOST=127.0.0.1  # Dirección del host de la base de datos. En este contexto, es innecesario ya que PostgreSQL se ejecuta dentro de un contenedor.
+      - POSTGRES_USER=root  # Usuario predeterminado para acceder a la base de datos PostgreSQL.
+      - POSTGRES_PASSWORD=0109  # Contraseña para el usuario predeterminado de PostgreSQL.
+      - POSTGRES_DB=Control_Documentos  # Nombre de la base de datos predeterminada que se creará automáticamente al iniciar el contenedor.
+    volumes:
+     - postgres_data:/var/lib/postgresql/data  # Monta un volumen para persistir los datos de PostgreSQL. "postgres_data" es el nombre del volumen en el host.
+
+  pgadmin:  # Nombre del servicio para el contenedor de pgAdmin, una interfaz gráfica para manejar PostgreSQL.
+    image: dpage/pgadmin4  # Especifica la imagen de Docker a utilizar para el contenedor, en este caso, la imagen oficial de pgAdmin4.
+    environment:  # Define variables de entorno para el contenedor.
+      PGADMIN_DEFAULT_EMAIL: "admin@gmail.com"  # Email predeterminado para acceder a pgAdmin.
+      PGADMIN_DEFAULT_PASSWORD: "admin"  # Contraseña para el email predeterminado de pgAdmin.
+    ports:
+      - "8080:80"  # Mapeo de puertos. Expone el puerto 80 del contenedor al puerto 8080 del hostsi tren, permitiendo acceder a pgAdmin mediante el puerto 8080.
+    depends_on:
+      - postgres  # Establece una dependencia en el servicio "postgres", asegurando que se inicie primero.
+
+volumes:  # Define los volúmenes utilizados por los servicios.
+  postgres_data:  # Nombre del volumen para persistir los datos de PostgreSQL. Docker gestiona la ubicación física.
