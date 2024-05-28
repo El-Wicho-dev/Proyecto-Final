@@ -7,9 +7,10 @@ from django.db.models import Value,Case,When,F,CharField
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.utils import timezone
-
+from home.views import home
 
 # Create your views here.
+#Se renderiza el formulario para realizar el matriz de entrenamiento
 def encuesta(request):
     template_name = "Entrenamiento/realizar_entrenamiento.html"
     
@@ -31,6 +32,7 @@ def encuesta(request):
     
     if request.method == 'POST':
         
+        
         # Capturar el valor enviado desde el formulario
         nombre_documento = request.POST.get('nombre_documento')
         linea_area = request.POST.get('area_seleccionada')
@@ -38,6 +40,10 @@ def encuesta(request):
         numero_revision = request.POST.get('revision_documento')
         descripcion = request.POST.get('en_que_consiste')
         autorizacion = request.POST.get('autor')
+        
+        if not nombre_documento:
+            messages.error(request,"No existe nigun documento todavia para realizar entrenamiento")
+            return redirect('encuesta')
 
         print('nombre_documento:', nombre_documento, 'linea_seleccionado:', linea_area, 'tipo_documento:', tipo_documento, 'numero_revision:', numero_revision, 'descripcion:', descripcion, 'autorizacion:', autorizacion) 
 
@@ -68,9 +74,11 @@ def encuesta(request):
                 buenas += 1
             if documento['autorizador'] == autorizacion:
                 buenas += 1
-            if len(descripcion) >= 10:
-                print(len(descripcion))
-                buenas += 1
+
+        if len(descripcion) >= 10:
+            print("si es buena descripcion")
+            buenas += 1
+        
         
            # Mostrar calificación
         mensaje = "Su calificación es: " + str(buenas) + "/5"
@@ -113,7 +121,7 @@ def encuesta(request):
     return render(request,template_name,context)
 
 
-
+#Query de base de datos para consultar los documentos que estan en entrenamient con respecto al usuario 
 def documentos(id_usuario):
      # Consulta con ORM de Django
     entrenamientos = Entrenamiento.objects.filter(
@@ -144,7 +152,7 @@ def documentos(id_usuario):
         
     return entrenamientos
 
-
+#Query esete query sirve para determnar infromacion con respecto al documento seleccionado
 def select_documento(documento_seleccionado):
     
     documentos = Documento.objects.annotate(
@@ -173,7 +181,7 @@ def select_documento(documento_seleccionado):
     return documentos
 
     
-
+#Este metodo verifica si el document oesta en relizar entrenamiento y si el suario esta activo
 def verificar_firma_documentos(id_documento):
     usuarios_que_no_han_firmado = Entrenamiento.objects.filter(
         id_documento=id_documento, 

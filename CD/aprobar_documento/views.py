@@ -16,6 +16,7 @@ from django.contrib import messages
 from django.db import transaction
 from urllib.parse import quote
 from django.conf import settings
+from func.clases_de_documento import nomenclatura
 import re
 from docx2pdf import convert
 import os
@@ -31,6 +32,8 @@ def aprobar(request):
 
     if request.method == 'POST':
         action = request.POST.get('action')
+        comentario = request.POST.get('comment', '')
+
         nombre_documento = request.POST.get('reviewInput', '').strip()
         documento_buscar = Documento.CD_Firma_Documento_Pendiente(id_interesado).filter(nombre_documento__contains=nombre_documento)
         
@@ -38,6 +41,7 @@ def aprobar(request):
                 messages.error(request, "No ha seleccionado ningún documento para firmar o rechazar.")
                 return redirect('aprobar')  # Return to the form page with an error message
         
+        print(comentario)
         if action == 'sign':
             
 
@@ -48,14 +52,14 @@ def aprobar(request):
 
             for documento in documento_buscar:
                 id_documento = documento.id
-                """
+                
                 Historial.objects.create(
                 id_documento=documento,
                 id_responsable=request.user,
                 fecha=timezone.now(),
                 accion='FIRMADO'
                 )
-                """
+                
                 
                 Firma.objects.filter(id_documento=documento, id_liberador=request.user).update(firma=timezone.now())
                 codigo_plantilla = documento.codigo_plantilla
@@ -69,24 +73,19 @@ def aprobar(request):
                 Documento.objects.filter(id=id_documento).update(estado = 'ASIGNAR ENTRENAMIENTO')
                 messages.success(request, 'El documento ha sido liberado. No hay firmas pendientes.')
                 return redirect('home')  # Redirige para evitar reenvíos de formularios  
-
-            else:
-                if codigo_plantilla in ["MA", "SP"]:
-                    nomenclatura = calcular_nomenclatura(id_documento)
-                    correos, ids_usuarios = obtener_correos_para_entrenamiento(nomenclatura)
-                    send_mail(
-                        'Verificar entrenamiento en software de Control de Documentos',
-                        'Se te ha asignado como usuario a entrenar con respecto al documento. Se requiere entrar al software para validar entrenamiento',
-                        'from@example.com',
-                        correos,  # Aquí irían los correos dinámicos basados en la nomenclatura
-                        fail_silently=False,
-                    )
-                else:
-                    print("Manejo de otras plantillas no especificadas aquí.")
-
+            
+            
+            
             return redirect('aprobar')  # Redirige para evitar reenvíos de formularios  
         elif action == 'reject':
-            messages.error(request, 'El documento ha sido rechazado.')
+            id_documento = None
+            codigo_plantilla = None
+            for documento in documento_buscar:
+                id_documento = documento.id
+                
+                messages.error(request, 'El documento ha sido rechazado.')
+                print('recibi el id: ', id_documento)
+                Documento.objects.filter(id=id_documento).update(estado = 'RECHAZADO',fecha_finalizacion= timezone.now())
             return redirect('aprobar')   # Redirige para evitar reenvíos del formulario
 
             
@@ -104,14 +103,25 @@ def get_document_url(request):
         data = json.loads(request.body)
         nombre_documento = data.get('id_documento', '')
         nombre_documento = nombre_documento.replace('.docx', '.pdf')
-
+    
+        print(nombre_documento)
+        
+        no_documento,no_linea,consecutivo,revision,nombre_del_documento = nomenclatura(nombre_documento)
+        
+        plantillas = Plantilla.objects.get(codigo=no_documento)
+        nombre_plantilla = plantillas.nombre
+        
+        lineas = Linea.objects.get(codigo_linea= no_linea)
+        nombre_linea = lineas.nombre_linea
+        
         # Asegúrate de que los nombres de archivos estén correctamente URL-encoded
         # si tienen espacios o caracteres especiales
        
         nombre_documento = quote(nombre_documento)
         
+    
         # Construir la URL del documento PDF    
-        url = f"{settings.MEDIA_URL}firmas/{nombre_documento}"
+        url = f"{settings.RUTA_PDF_DOCUMENTOS}{nombre_plantilla}/{nombre_linea}/{nombre_documento}"
         
         if settings.DEBUG:
             url = f"http://127.0.0.1:8000{url}"

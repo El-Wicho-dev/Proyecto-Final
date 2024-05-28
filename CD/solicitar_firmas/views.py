@@ -21,6 +21,8 @@ import os
 from django.utils import timezone
 from func.correos import send_correo_ordinario  # Asumiendo que tu función está en utils.py
 from django.http import HttpResponse,JsonResponse
+import subprocess
+
 
 
 def ajax_filtrar_usuarios(request):
@@ -132,6 +134,7 @@ def solicitar(request):
         
         lineas = Linea.objects.get(codigo_linea= id_linea)
         id_linea_num = lineas.id
+        nombre_linea = lineas.nombre_linea
 
         id_responsable = request.user.id
         responsable = User.objects.get(id=id_responsable)
@@ -158,12 +161,11 @@ def solicitar(request):
         print("id del liberador" , revisador)
         print("id del aprobador" , aprobador)
         print("Revisión de documento:", rev)
-        print("Revisión de documento:", revicion_actual)
+        print("Revisión actual de plantilla:", revicion_actual)
         print("Consecutivo:", consecutivo)
         print("Extensión del archivo:", extension)
         print("Comentarios del Documento:", comentarios)
-        
-     
+        print("nombre con extension del Documento:", nombre_con_extencion)
         
         
         documento = Documento.objects.create(
@@ -175,9 +177,9 @@ def solicitar(request):
         aprobador=aprobador,
         estado='REVISION',
         fecha_finalizacion = None,
-        revision_de_plantilla =revicion_actual,
+        revision_de_plantilla =int(revicion_actual),
         revision_documento=rev,
-        consecutivo=consecutivo,
+        consecutivo=int(consecutivo),
         extension=extension,
         comentarios=comentarios
         )
@@ -187,6 +189,38 @@ def solicitar(request):
         Firma.objects.create(id_documento=documento, id_liberador=revisador,firma = None)
         Firma.objects.create(id_documento=documento, id_liberador=aprobador,firma = None)
         Firma.objects.create(id_documento=documento, id_liberador=responsable, firma=timezone.now())
+        
+        
+
+        # Extraer el nombre del archivo cargado sin la extensión
+        editable_file = request.FILES['editable_document']
+        file_name, file_extension = os.path.splitext(editable_file.name)
+        nom_archivo = file_name  # Esto ahora contiene sólo el nombre sin extensión
+
+        # Rutas de los archivos
+        rutadoc = f'{plantillas}/{nombre_linea}/{nom_archivo}.docx'
+        editable_file_path = f'Control_de_documentos_Editables/{rutadoc}'
+        default_storage.save(editable_file_path, ContentFile(editable_file.read()))
+
+        # Ruta completa donde se guarda el archivo .docx
+        full_docx_path = default_storage.path(editable_file_path)
+        # Directorio de salida para el archivo .pdf
+        output_dir = default_storage.path(f'Control_de_documentos_pdfs/{plantillas}/{nombre_linea}/')
+
+        # Comando para convertir de .docx a .pdf usando LibreOffice
+        subprocess.run([
+            'libreoffice', '--headless', '--convert-to', 'pdf',
+            '--outdir', output_dir, full_docx_path
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        # Verifica que el archivo .pdf se haya creado correctamente
+        pdf_path = f'{output_dir}{nom_archivo}.pdf'
+        if default_storage.exists(pdf_path):
+            print("El archivo PDF se ha creado exitosamente.")
+        else:
+            print("Ocurrió un error al crear el archivo PDF.")
+        
+        
     
         messages.success(request,"Se ha solicitado con exito la liberación")
     

@@ -46,7 +46,6 @@ LOCAL_APPS = [
     'realizar_entrenamiento',
     'django_seed',
     'django_extensions',
-    'solicitar_liberacion',
     'Documentos',
     'Usuarios',
     'solicitar_firmas',
@@ -55,12 +54,13 @@ LOCAL_APPS = [
     'bitacora',
     'actualizar_documento',
     'actualizar_nomenclatura',
-    'actualizar_puestos'
 
 ]
 
 THIRD_APPS = [
     'rest_framework',
+    'channels',
+
 ]
 
 INSTALLED_APPS = BASE_APPS + LOCAL_APPS + THIRD_APPS
@@ -76,6 +76,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'CD.middleware.LoginRequiredMiddleware',  # Añadir aquí
+    'CD.middleware.NoCacheMiddleware',  # Añadir aquí
+
+
 ]
 
 ROOT_URLCONF = 'CD.urls'
@@ -91,12 +95,26 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'home.context_processors.notificaciones_context',
             ],
         },
     },
 ]
 
 WSGI_APPLICATION = 'CD.wsgi.application'
+
+
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],  # Cambia esto si tu Redis está en otro servidor
+        },
+    },
+}
+
+
 
 
 # Database
@@ -168,6 +186,9 @@ MEDIA_URL2 = 'media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 TEMP_OUTPUT_DIR = os.path.join(MEDIA_ROOT, 'temp')
 
+MEDIA_ROOT_PDF = os.path.join(MEDIA_ROOT,'Control_de_documentos_pdfs')
+MEDIA_ROOT_EDITABLE = os.path.join(MEDIA_ROOT,'Control_de_documentos_Editables')
+
 
 
 # Default primary key field type
@@ -219,3 +240,12 @@ EMAIL_HOST_PASSWORD = 'nombxrwxsoiyfsgf'
 
 RUTA_PRINCIPAL = '/media/plantillas/'
 RUTA_EDITABLES = '/media/rutas/'
+
+RUTA_EDITABLES_DOCUMENTOS = '/media/Control_de_documentos_Editables/'
+RUTA_PDF_DOCUMENTOS = '/media/Control_de_documentos_pdfs/'
+
+
+RUTA_SELLOS = '/media/sellos/'
+
+
+RUTA_TEMP = '/media/temp/'

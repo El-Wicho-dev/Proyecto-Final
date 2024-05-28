@@ -9,7 +9,7 @@
 <div class="container">
     <div class="row">
         <div class="col-md-12 mb-3">
-            <form method="post" enctype="multipart/form-data">
+            <form  method="post" enctype="multipart/form-data" action="{% url 'aprobar_entrenamiento' %}">
                 {% csrf_token %}
                 <label for="documento">Revisar:</label>
                 <div class="input-group">
@@ -20,7 +20,7 @@
                         </option>
                         {% endfor %}
                     </select>
-                    <button type="button" class="btn btn-success" onclick="fetchDocumentDetails()">Buscar <i class='bx bx-search'></i></button>
+                    <button type="submit" class="btn btn-success" name="action" value="search" >Buscar <i class='bx bx-search'></i></button>
                 </div>
             </form>
         </div>
@@ -30,7 +30,7 @@
                 <iframe class="embed-responsive-item" src="{{ doc_pdf }}" width="450" height="500"></iframe>
             </div>
             {% else %}
-            <p> No ahi documentos para mostrar </p>
+            <p>No hay documentos para mostrar</p>
             {% endif %}
 
         </div>
@@ -50,16 +50,12 @@
                 </div>
                 {% endfor %}
             </div>
-            <form method="POST" action="{% url 'aprobar_entrenamiento' %}">
+            <form id="approvalDetailsForm" method="POST" action="{% url 'aprobar_entrenamiento' %}">
                 {% csrf_token %}
 
                 <div class="form-group">
                     <label for="comment">Comentario:</label>
                     <textarea class="form-control" id="comment" name="comment" rows="3"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="fileUpload">Arrastra el archivo editado aquí</label>
-                    <input type="file" class="form-control-file" id="fileUpload" name="fileUpload">
                 </div>
                 <!-- Botones Firmar y Rechazar -->
                 <br>
@@ -70,39 +66,9 @@
         </div>
     </div>
 </div>
-</form>
 
 <script>
-    console.log("hola como estas");
 
-    fetchDocumentDetails();
-
-    function fetchDocumentDetails() {
-        var selectedDoc = $('#documento').val();
-        console.log("OBTENER EL VALOR: " + selectedDoc);  // Verificar que se captura el valor correctamente
-        
-        // Obtener el token CSRF desde el HTML
-        var csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
-        $.ajax({
-            url: '{% url "document_details" %}',
-            type: 'POST',
-            headers: {
-                'X-CSRFToken': csrftoken  // Incluir el token CSRF en los encabezados
-            },
-            data: {
-                'nombre_documento': selectedDoc
-            },
-            dataType: 'json',
-            success: function(data) {
-                console.log(data);  // Verificar que los datos llegan correctamente
-                // Aquí debes actualizar los elementos de tu carta basado en 'data'
-            },
-            error: function(error) {
-                console.log('Error:', error);
-            }
-        });
-    }
 </script>
 
 {% endblock content %}

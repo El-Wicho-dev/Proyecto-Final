@@ -19,19 +19,20 @@
 </style>
 
 {% block content %}
-  {% if messages %}
-    <div>
-      {% for message in messages %}
-        <p>{{ message }}</p>
-      {% endfor %}
-    </div>
-  {% endif %}
 
   <main class="form-signin">
     <form method="POST" action="{% url 'login' %}">
       {% csrf_token %}
       <img class="mb-4" src="{% static 'img/logo_empresa.jpg' %}" style="display: block; margin-left: auto; margin-right: auto;" width="150" height="90">
       <h1 class="h3 mb-3 fw-normal" align="center">Por favor Inicie Sesión</h1>
+
+        {% if messages %}
+            <div class="alert alert-danger" role="alert">
+                {% for message in messages %}
+                    {{ message }}
+                {% endfor %}
+            </div>
+        {% endif %}
 
       <div class="form-floating">
         <input type="email" class="form-control" id="email" name="email" placeholder="name@example.com">

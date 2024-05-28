@@ -6,7 +6,8 @@ from django.db.models import F, Value , CharField,Func,Q,Case,When
 from django.db.models.functions import Concat,Cast,Coalesce
 from django.http import HttpResponse,JsonResponse
 
-
+#Metodo que muestra la bitacora de los  documento s
+#Lo rendiriza en una tabal dianmica
 def logbook(request):
     template = 'documentos/bitacora.html'
     

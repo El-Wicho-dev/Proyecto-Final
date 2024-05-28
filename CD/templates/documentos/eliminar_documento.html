@@ -4,48 +4,48 @@
 {% block title %}Delete Document{% endblock title %}
 
 {% block content %}
-<form method="post" enctype="multipart/form-data">
+<form id="delete-form" method="post" enctype="multipart/form-data">
     {% csrf_token %}
     <div class="container mt-5">
-        <h2 align="center">Delete document</h2>
+        <h2 align="center">Eliminar Documento</h2>
         <div class="row">
             <div class="col-md-12 mb-4">
-                <label for="reviewInput">Revisar:</label>
-                <div class="input-group">
-                    <input type="text" class="form-control" id="reviewInput" value="{{ review_input_value }}" name="reviewInput" placeholder="Ingresa el nombre de la nomenclatura">
-                    <div class="input-group-append">
-                        <button type="submit" name="action" value="search" class="btn btn-success">Buscar <i class='bx bx-search'></i></button>
+                <div class="form-group">
+                    <label for="nomenclatura" class="form-label">Nomenclatura:</label>
+                    <div class="input-group">
+                        <select class="form-control js-example-responsive" style="width: 100%" id="nomenclatura" name="nomenclatura"></select>
                     </div>
                 </div>
             </div>
-            <br><br>
-            
-            {% if pdf_url  %}
-                
-            <div class="col-md-6 mt-5">
+        </div>
+        <br><br>
+        
+        <div class="row">
+            {% if pdf_url %}
+            <div class="col-md-6">
                 <div class="embed-responsive embed-responsive-16by9">
                     <iframe class="embed-responsive-item w-100" src="{{ pdf_url }}" height="850"></iframe>
                 </div>
             </div>
             {% else %}
-             <p> no ahi documento con ese nomenclatura</p>
-            {% endif%}
+            <p>No hay documento con esa nomenclatura</p>
+            {% endif %}
 
-            <div class="col-md-6 mt-5" >
+            <div class="col-md-6">
                 <div class="container">
                     <h3>Entrenados:</h3>
                     <table class="table">
                         <thead class="thead-dark">
                             <tr>
                                 <th scope="col">Nombre</th>
-                                <th scope="col">Calificacion</th>
+                                <th scope="col">Calificación</th>
                                 <th scope="col">Fecha</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for entrenamiento in entrenamientos %}
                             <tr>
-                                <td>{{ entrenamiento.nombre_completo}}</td>
+                                <td>{{ entrenamiento.nombre_completo }}</td>
                                 <td>{{ entrenamiento.calificacion }}</td>
                                 <td>{{ entrenamiento.fecha }}</td>
                             </tr>
@@ -75,49 +75,63 @@
                 </div>
             </div>
         </div>
+        
         {% if pdf_url %}
         <br>
         <div class="text-center">
-            <button type="submit" class="btn btn-danger" name="action" value="reject" onclick="return confirmDeletion();">
-                Delete Document <i class="bi bi-file-earmark-x"></i>
+            <input type="hidden" name="id_documento" value="{{ id_documento }}">
+            <button type="submit" class="btn btn-danger" name="action" value="reject" >
+                Eliminar documento <i class="bi bi-file-earmark-x"></i>
             </button>
         </div>
         {% endif %}
     </div>
 </form>
 
-
-
-
 <script>
     $(document).ready(function() {
-        $("#reviewInput").autocomplete({
-            source: function(request, response) {
-                $.ajax({
-                    url: "{% url 'autocomplete_nomenclatura' %}",
-                    dataType: "json",
-                    data: {
-                        term: request.term
-                    },
-                    success: function(data) {
-                        response(data);
-                    }
-                });
+        var selectedNomenclatura = "{{ nomenclatura_text|default:'' }}";
+
+        $(".js-example-responsive").select2({
+            width: 'resolve', // Asegura que el ancho es establecido correctamente
+            ajax: {
+                url: '{% url "autocomplete_nomenclatura" %}', // Cambia esto por la URL que retorna tus datos
+                dataType: 'json',
+                delay: 250, // Retardo en milisegundos después de dejar de escribir para hacer la petición
+                data: function (params) {
+                    return {
+                        searchTerm: params.term // término de búsqueda ingresado por el usuario
+                    };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.results.map(function(item) {
+                            return { id: item.id, text: item.text };
+                        })
+                    };
+                },
+                cache: true
             },
-            minLength: 2,
-        }).autocomplete("instance")._renderItem = function(ul, item) {
-            return $("<li>")
-                .addClass("dropdown-item")  // Usando clases de Bootstrap
-                .append(item.label)
-                .appendTo(ul);
-        };
+            minimumInputLength: 1, // Número mínimo de caracteres para iniciar la búsqueda
+            placeholder: 'Buscar...', // Texto del placeholder
+            allowClear: true // Permite limpiar el campo
+        }).on('select2:select', function (e) {
+            var selectedText = e.params.data.text;
+            var form = $('#delete-form');
+            $('<input>').attr({
+                type: 'hidden',
+                name: 'nomenclatura_text',
+                value: selectedText
+            }).appendTo(form);
+            form.submit();
+        });
+
+        if (selectedNomenclatura) {
+            var option = new Option(selectedNomenclatura, selectedNomenclatura, true, true);
+            $('#nomenclatura').append(option).trigger('change');
+        }
     });
-    
-    </script>
-    
 
-
-    
-
-
+  
+</script>
 {% endblock content %}

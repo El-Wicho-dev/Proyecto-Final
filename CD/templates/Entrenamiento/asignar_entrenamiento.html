@@ -63,7 +63,7 @@
         {% endfor %}
 
         <div class="col-12 mt-3">
-            <button type="submit" id = 'enviar-usuarios-btn' class="btn btn-primary w-100">Solicitar Entrenamiento</button>
+            <button type="button" id = 'enviar-usuarios-btn' class="btn btn-primary w-100">Solicitar Entrenamiento</button>
         </div>
     </form>
     </div>
@@ -239,49 +239,66 @@
             });
         
             console.log('Usuarios a enviar:', usuarios); // Verificar qué se está recogiendo
-        
+            var documento = $('#documento').val();
+            console.log("documento", documento)
+            
             // Verifica si hay usuarios para enviar
-            if (usuarios.length > 0) {
+            if (usuarios.length === 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'No hay usuarios para enviar.',
+                    confirmButtonText: 'Aceptar'
+                });
+                return; // Retorna inmediatamente si el campo del documento está vacío
+
+            } else if (documento === null) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'El campo del documento está vacío.',
+                    confirmButtonText: 'Aceptar'
+                });
+                return; // Retorna inmediatamente si el campo del documento está vacío
+
+            } else {
                 var usuariobool = 'true';
                 $.ajax({
-                    url: '{% url "asignar_entrenamiento" %}', // Asegúrate que esta URL es correcta
+                    url: '{% url "asignar_entrenamiento" %}', // Asegúrate de que esta URL es correcta
                     type: 'POST',
                     data: {
                         'usuarios[]': usuarios, // Aquí 'usuarios' debe ser una cadena, lista de nombres separados por comas
-                        'usuariobool': usuariobool
+                        'usuariobool': usuariobool,
+                        'documento': documento
                     },
                     traditional: true, // Asegura que jQuery no use la notación de corchetes moderna que puede no manejar Django correctamente
                     headers: {
                         'X-CSRFToken': '{{ csrf_token }}'
                     },
                     success: function(response) {
-                        console.log("Se mando correctamente");
+                        console.log("Se envió correctamente");
                         // Limpiar las listas después de enviar los datos
+
+                        Swal.fire({
+                            title: '¡Éxito!',
+                            text: 'Se ha guardado la nomenclatura con todas las descripciones de puesto establecidas excluyendo las repetidas',
+                            icon: 'success',
+                            confirmButtonText: 'Ok'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                // Redirigir a la URL específica
+                                window.location.href = 'http://127.0.0.1:8000/inicio/';
+                            }
+                        });
+
+
+
                         $('#usuarios-lista').empty();
                         $('#usuarios-lista2').empty();
                         $('#usuarios-titulo').hide(); // Ocultar el título si ya no es necesario
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Error al enviar los usuarios:', error);
-                    }
-                });
-            } else {
-                var usuariobool = 'false';
-                $.ajax({
-                    url: '{% url "asignar_entrenamiento" %}', // Asegúrate que esta URL es correcta
-                    type: 'POST',
-                    data: {
-                        'usuarios[]': usuarios, // Aquí 'usuarios' debe ser una cadena, lista de nombres separados por comas
-                        'usuariobool': usuariobool
-                    },
-                    traditional: true, // Asegura que jQuery no use la notación de corchetes moderna que puede no manejar Django correctamente
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    },
-                    success: function(response) {
-                        console.log("Se mando correctamente");
-                        // Limpiar las listas después de enviar los datos
-                    
+
+
+
                     },
                     error: function(xhr, status, error) {
                         console.error('Error al enviar los usuarios:', error);

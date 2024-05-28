@@ -36,7 +36,7 @@ class BootstrapModelForm(forms.ModelForm):
                 widget.attrs.update({'class': 'form-control'})
             if hasattr(field, 'choices'):
                 field.widget = forms.Select(attrs={'class': 'form-control'})
-                field.choices = [('','Select option:')] + list(field.choices)[1:]
+                field.choices = [('','Selecciona una opción:')] + list(field.choices)[1:]
                 field.empty_label = None
 
 
@@ -109,7 +109,7 @@ class DocumentoForm(BootstrapModelForm):
         
     # Personalizaciones adicionales que no se pueden hacer en la clase Meta
         usuarios = [(usuario.id, usuario.get_full_name()) for usuario in User.objects.all()]
-        usuarios.insert(0, ('', 'Select option:'))
+        usuarios.insert(0, ('', 'Selecciona una opción:'))
         
         # Asignar las opciones al campo autor, revisador y aprobador
         self.fields['id_responsable'].widget.choices = usuarios

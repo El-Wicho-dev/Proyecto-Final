@@ -39,7 +39,7 @@ class BootstrapModelForm(forms.ModelForm):
                 widget.attrs.update({'class': 'form-control'})
             if hasattr(field, 'choices'):
                 field.widget = forms.Select(attrs={'class': 'form-control'})
-                field.choices = [('','Select option:')] + list(field.choices)[1:]
+                field.choices = [('','Selecciona un opción:')] + list(field.choices)[1:]
                 field.empty_label = None
 
 

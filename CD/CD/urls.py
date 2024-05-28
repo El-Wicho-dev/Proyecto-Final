@@ -24,7 +24,6 @@ urlpatterns = [
     path('liberar_documento/', include('liberar_documento.urls')),
     path('bloquear_documento/', include('bloquear_documento.urls')),
     path('eliminar_documento/', include('eliminar_documento.urls')),
-    path('solicitar_liberacion/', include('solicitar_liberacion.urls')),
     path('descargar_plantilla/', include('descargar_plantilla.urls')),
     path('buscar_documento', include('buscar_documento.urls')),
     path('solicitar_firmas/', include('solicitar_firmas.urls')),
@@ -39,7 +38,6 @@ urlpatterns = [
     path('entrenamiento/asignar_entrenamiento', include('asignar_entrenamiento.urls')),
     path('entrenamiento/matriz_de_entrenamiento', include('matriz_entrenamiento.urls')),
     path('entrenamiento/actualizar_nomenclatura', include('actualizar_nomenclatura.urls')),
-    path('entrenamiento/actualizar_puestos', include('actualizar_puestos.urls')),
 
 
 

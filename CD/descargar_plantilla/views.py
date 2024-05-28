@@ -24,7 +24,7 @@ import os
 # Create your views here.
 
 
-
+#RENDERIZO EL FORMULARIO DE PLANTILLA
 def descargar(request):
     template_name = 'documentos/descargar_plantilla.html'
     
@@ -44,10 +44,6 @@ def descargar(request):
     area_form.fields['area'].choices = choices_areas
     linea_form.fields['nombre_linea'].choices = choices_lineas
 
-
-
-  
-
     contexto = {
         'plantila_form': plantila_form,
         'area_form': area_form,
@@ -58,7 +54,7 @@ def descargar(request):
 
 
 
-#obtener areas
+#obtener OBTENGO EL VALRO QUE SE REQUIERE DEPENDIENDO EL TIPO DE PLANTILAL QUE SE SELECCCIONA
 def ajaxarchivo(request):
     tipo_de_plantilla = request.GET.get('nombre')
     area_seleccionada = request.GET.get('area')
@@ -67,7 +63,6 @@ def ajaxarchivo(request):
     print(nombre_plantilla)
     
    
-
     try:
         plantilla = Plantilla.objects.get(nombre=nombre_plantilla)
         tipo_de_archivo = plantilla.tipo_de_area
@@ -108,9 +103,7 @@ def ajaxarchivo(request):
             lista_areas = [{'area': area.area.area, 'id': area.area.id} for area in areas]
             print(lista_areas) 
         
-        
-        
-        
+    
      # Retorna ambos, el tipo de plantilla y las áreas en una sola respuesta
         return JsonResponse({'tipo_de_plantilla': tipo_de_plantilla, 'areas': lista_areas}, safe=False)
     except Plantilla.DoesNotExist as e:
@@ -119,12 +112,12 @@ def ajaxarchivo(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+#Este ajax se obtiene el area para filtrar las lineas correspondientes
 def ajaxareas(request):
     # Filtra las líneas basándote en el área seleccionada
     area_seleccionadaxd = request.GET.get('areaSeleccionada')
     print(f'EL area_seleccionada es: {area_seleccionadaxd}')
 
-    
     lineas = Linea.objects.filter(area_id=area_seleccionadaxd).order_by('nombre_linea')
 
     # Construye una lista de diccionarios basada en las líneas filtradas
@@ -134,16 +127,17 @@ def ajaxareas(request):
     return JsonResponse({'lineas': lista_lineas}, safe=False)
 
 
+
+#Este ajax se tiene al seleciona la linea en caso que exista un documento que fitre los documentos correspondientes
 def ajax_linea(request):
     print("Se ejecuto el ajax linea")
     if request.method == 'GET':
-         # Guardar IDs en la sesión
+        # Guardar IDs en la sesión
         request.session['linea_id'] = request.GET.get('lineaSeleccionada')
         request.session['plantilla_id'] = request.GET.get('plantillaSeleccionada')
         request.session['area_id'] = request.GET.get('areaSeleccionada')
         
-        
-        #Recuperar y almacenar los nombres basados en los IDs
+        # Recuperar y almacenar los nombres basados en los IDs
         try:
             linea = Linea.objects.get(id=request.session['linea_id'])
             plantilla = Plantilla.objects.get(id=request.session['plantilla_id'])
@@ -156,7 +150,29 @@ def ajax_linea(request):
 
             print(f"La línea es {request.session['linea_seleccionada']}, la plantilla es {request.session['plantilla_seleccionada']}, el área es {request.session['area_seleccionada']}")
 
-            return JsonResponse({'Datos': 'Obtenidos'}, status=200)
+            documentos = Documento.objects.filter(
+            estado='APROBADO',
+            id_plantilla__nombre=plantilla.nombre,
+            id_linea__nombre_linea=linea.nombre_linea
+        ).annotate(
+            consecutivo_str=Case(
+                When(consecutivo=0, then=Value('00')),
+                When(consecutivo__lt=10, then=Concat(Value('0'), F('consecutivo'))),
+                default=F('consecutivo'),
+                output_field=CharField()
+            )
+        ).annotate(
+            nombre_anotacion=Concat(
+                F('id_plantilla__codigo'), Value('-'), F('id_linea__codigo_linea'), Value(' '),
+                'consecutivo_str', Value(' REV. '), F('revision_documento'), Value(' '), F('nombre'),
+                output_field=CharField()
+            )
+        ).order_by('nombre')
+
+            documentos_list = [documento.nombre_anotacion for documento in documentos]
+            print(documentos_list)
+
+            return JsonResponse({'documentos': documentos_list}, status=200)
         except ObjectDoesNotExist:
             return JsonResponse({'error': 'Uno o más elementos no existen'}, status=404)
     else:
@@ -165,19 +181,15 @@ def ajax_linea(request):
 
     
     
-
+#Esta  funcion hace algo en especifco cuando es de crear documento cuandp ose activa
 def ajax_checkbox(request):
     if request.method == "GET":
         plantilla_seleccionada = request.GET.get('nombrePlantillaSeleccionada')
         area_seleccionada = request.GET.get('areaSeleccionada')
         linea_seleccionada = request.GET.get('lineaSeleccionada')
-
-    
-    
     #data = json.loads(request.body)
     
     #nombre_plantilla = data.get('nombrePlantillaSeleccionada')
-    
     
     plantillas = Plantilla.objects.get(id=plantilla_seleccionada)
     nombre_plantilla= plantillas.nombre
@@ -257,7 +269,7 @@ def ajax_checkbox(request):
 
 
 
-#Este va hacer un ajax para restricciones
+#Este va hacer un ajax para restricciones y determina la revision
 def ajaxdetermine_revision(request):
     if request.method == "GET":
         plantilla_seleccionada = request.session.get('plantilla_seleccionada')
@@ -322,7 +334,8 @@ def ajaxdetermine_revision(request):
     return JsonResponse({"revision": revision})
 
 
-
+#Aqui se inserta el numero de intentatos al selccionar el documento
+#y verifica si el usuario ya esta siendo editado por alguein mas si esta blqoueado el documento 
 def nombre_doc_SelectedIndexChanged(request):
 
     if request.method == "POST":
@@ -375,34 +388,33 @@ def nombre_doc_SelectedIndexChanged(request):
                 # Combinar el número de documento y el número de línea en una sola cadena
                 nomenclatura = f"{nombre_parts[0]} {nombre_parts[1]}"
                 print("nombre temporal de verificacion: ", nomenclatura)
+            
              
-             
-             
-             
-        print("nombre temporal de verificacion: ", nomenclatura)
-        try:
-            documento_bloqueado = DocumentoBloqueado.objects.get(
-                nomenclatura=nomenclatura,
-                id_responsable__is_active=True
+        documento_bloqueado = DocumentoBloqueado.objects.filter(
+            nomenclatura=nomenclatura,
+            id_responsable__perfilusuario__estado='ACTIVO'
+        ).first()
 
-            )
+        if documento_bloqueado is not None:
             usuario_editando = documento_bloqueado.id_responsable
             full_name = usuario_editando.get_full_name()
             mensaje = f"Este documento está siendo editado por el usuario '{full_name}', por lo que no se puede descargar en este momento. Le sugerimos contactarse con el usuario para proponer sus cambios o con el administrador para desbloquear el documento."
-            documento_bloqueado.intentos_descarga += 1
+            documento_bloqueado.intentos_descarga += 1 # suma +1 en la base de datos pro cada intentor de descarga
             documento_bloqueado.save()
-            
-            return JsonResponse({'message': mensaje})
 
-        except DocumentoBloqueado.DoesNotExist:
-            mensaje = "El documento no está bloqueado."
-            messages.error(request, mensaje)
+            return JsonResponse({'message': mensaje})
+        
+         
+        # Aquí deberías agregar la lógica de descarga si no está bloqueado
+        return JsonResponse({'success': 'Documento no está bloqueado, proceda con la descarga'})
+          
             
     # Si el método no es POST o no se encuentra ningún documento bloqueado, devolver un mensaje de éxito
     return JsonResponse({'success': 'Operación realizada correctamente'})
         
     
-    
+#verificar a fondo el de descargar   
+#Metodo donde se realiza la descagar del documento dependiente la situacion  del tipo de documento que se descarge y aumenta la revision 
 def cD_Boton1_Click(request):
     if request.method == "POST":
         isChecked = request.POST.get('isChecked')
@@ -450,7 +462,7 @@ def cD_Boton1_Click(request):
         print(f"isChecked: {isChecked}, nombrePlantillaSeleccionada: {nombrePlantillaSeleccionada}, lineaSeleccionada: {lineaSeleccionada}, nombreDocumento: {nombreDocumento}")
 
         if nombre_plantilla == "PLANTILLA":
-            print("Entre al metodo")
+            print("Entre al metodo Plantilla")
             nombre_archivo = os.path.basename(nombreDocumento)
             nombre_parts = nombre_archivo.split('_')
             if len(nombre_parts) >= 3:
@@ -466,12 +478,13 @@ def cD_Boton1_Click(request):
                     
                     nombre_temp = f"{codigo_Docum}-{codigo_linea} {consecutivo_nuevo}"
 
-                    
+                    #Metodo para insertar en la abse de datos 
                     insertdoc_block(nombre_temp,request.user,nombre_del_documento)
 
-                    
+                    #Manda  al mentodo para la descargar del archivo 
                     response = copy_file_and_provide_download_url(request, ruta_docum, nuevo_nombre)
                     return response
+                
                 except ValueError:
                     return JsonResponse({'error': 'La revisión actual no es un número válido'}, status=400)
 
@@ -484,7 +497,7 @@ def cD_Boton1_Click(request):
 
             consecutivo_nuevo = "{:02d}".format(int(last_consecutivo.consecutivo) + 1) if last_consecutivo else "01"
             nombre = f'{codigo_Docum}-{codigo_linea} {consecutivo_nuevo} REV. {revision} {nombreDocumento}'
-            nombre_del_documento = nombre
+            nombre_del_documento = nombre.rstrip('.docx')
             
             nombre_temp = f"{codigo_Docum}-{codigo_linea} {consecutivo_nuevo}"
 
@@ -496,27 +509,48 @@ def cD_Boton1_Click(request):
             
             return response
         else:
-            documento = Documento.objects.filter(
-                id_linea__area__area=Concat(F('id_plantilla__codigo'), Value('-'), F('id_linea__codigo_linea')),
-                id_plantilla__archivo__contains=nombreDocumento,
-                estado='APROBADO'
-            ).annotate(
-                nombre_completo=Concat(
-                    F('id_plantilla__codigo'), Value('-'), F('id_linea__codigo_linea'), Value(' '),
-                    Case(
-                        When(consecutivo__lt=10, then=Concat(Value('0'), Cast(F('consecutivo'), CharField()))),
-                        default=Cast(F('consecutivo'), CharField()),
-                        output_field=CharField()
-                    ),
-                    Value(' REV.'), F('revision_documento'), Value(' '), F('nombre'),
+            print("Entre al metodo actulizar documento")
+            print("nombre_documentoo" , nombreDocumento)
+            documento = Documento.objects.annotate(
+            nombre_completo=Concat(
+                F('id_plantilla__codigo'), Value('-'),
+                F('id_linea__codigo_linea'), Value(' '),
+                Case(
+                    When(consecutivo__lt=10, then=Concat(Value('0'), Cast('consecutivo', output_field=CharField()))),
+                    default=Cast('consecutivo', output_field=CharField()),
                     output_field=CharField()
-                )
-            ).order_by('-id').first()
+                ),
+                Value(' REV. '), F('revision_documento'), Value(' '), F('nombre')
+            )
+        ).filter(
+            nombre_completo=nombreDocumento,
+            estado='APROBADO'
+)
 
             if documento:
-                next_revision = str(int(documento.revision_documento) + 1).zfill(2)
-                consecutivo_nuevo = str(int(documento.revision_documento)).zfill(2)
-                ruta_archivo = GuardarDocumento.get_ruta(documento.id)
+                print("si entre al if documento")
+                id_documento = documento[0].id
+                revision_plantilla = int(documento[0].revision_de_plantilla)  # Asegúrate de que es entero
+                
+                print("tipo de plantilla" , nombre_plantilla)
+                
+                plantilla = Plantilla.objects.filter(nombre=nombre_plantilla).first()
+
+                revision_actual = int(plantilla.revision_actual)  # Asegúrate de que es entero
+                
+                
+                print('id_documento',id_documento,'revison actual: ', revision_actual , 'revision_plantilla: ', revision_plantilla)
+                if revision_plantilla == revision_actual:
+                    print("si se cumplio")
+                    # Crea una instancia de GuardarDocumento primero
+                    guardar_documento = GuardarDocumento(settings.RUTA_EDITABLES_DOCUMENTOS)
+
+                    # Luego llama al método get_ruta
+                    ruta_archivo = guardar_documento.get_ruta(id_documento)
+
+    
+                
+                print("no se cumplio")
                 nombre_parts = nombreDocumento.split(' ')
                 revision_part_index = None
                 for i, part in enumerate(nombre_parts):
@@ -549,7 +583,7 @@ def cD_Boton1_Click(request):
     return JsonResponse({'success': 'Operación realizada correctamente'})
 
 
-
+#Metodo no se inserta el documento para que se bloqueee
 def insertdoc_block(nombre_temp,usuario_actual,nombre_del_documento):
     doc_bloqueado = DocumentoBloqueado.objects.create(
             nomenclatura=nombre_temp,
@@ -583,8 +617,12 @@ def copy_file_and_provide_download_url(request, original_url, new_name):
     # Verificar si el archivo original existe
     if default_storage.exists(path):
         content = default_storage.open(path).read()
+        
+        # Asegurarse de no duplicar la extensión .docx
+        if not new_name.endswith('.docx'):
+            new_name += '.docx'
 
-        new_file_name = f"{new_name}.docx"
+        new_file_name = new_name
         new_file_path = os.path.join('temp', new_file_name)  # Almacenar en subdirectorio 'temp' bajo 'media'
 
         # Guardar el nuevo archivo en la carpeta temporal

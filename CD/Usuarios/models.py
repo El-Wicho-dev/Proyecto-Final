@@ -1,10 +1,25 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.dispatch import receiver
+from django.http import HttpResponseForbidden
 from django.db.models.signals import post_save
 
 
 # Create your models here.
+
+
+
+
+def descripcion_general_required(descripcion):
+    def decorator(view_func):
+        def _wrapped_view(request, *args, **kwargs):
+            if request.user.is_authenticated:
+                usuario_puesto = UsuarioPuesto.objects.filter(usuario=request.user).first()
+                if usuario_puesto and usuario_puesto.puesto.descripcion_general == descripcion:
+                    return view_func(request, *args, **kwargs)
+            return HttpResponseForbidden("No tienes permiso para ver esta página.")
+        return _wrapped_view
+    return decorator
 
 
 # Modelo para Usuarios

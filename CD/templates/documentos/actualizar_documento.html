@@ -14,18 +14,19 @@
                     ACTUALIZAR ARCHIVO
                 </div>
                 <div class="card-body">
-                    <form>
+                    <form method="POST" action="{% url 'update_document' %}" enctype="multipart/form-data">
+                        {% csrf_token %}
                         <div class="mb-3">
                             <label for="nomenclatura" class="form-label">Nomenclatura:</label>
-                            <select class="js-example-responsive" style="width: 100%" id="nomenclatura"></select>
+                            <select class="js-example-responsive" style="width: 100%" id="nomenclatura" name="nomenclatura"></select>
                         </div>
                         <div class="mb-3">
                             <label for="documentoEditable" class="form-label">Adjuntar Documento editable:</label>
-                            <input type="file" class="form-control" id="documentoEditable" accept=".doc,.docx">
+                            <input type="file" class="form-control" id="documentoEditable" name="documentoEditable" accept=".doc,.docx">
                         </div>
                         <div class="mb-3">
                             <label for="documentoPDF" class="form-label">Adjuntar Documento PDF:</label>
-                            <input type="file" class="form-control" id="documentoPDF" accept=".pdf">
+                            <input type="file" class="form-control" id="documentoPDF" name="documentoPDF" accept=".pdf">
                         </div>
                         
                         <button type="submit" class="btn btn-primary">Cargar Documento</button>
@@ -68,7 +69,6 @@
 
     // Añadir evento de envío al formulario
     $('form').on('submit', function(e) {
-        e.preventDefault(); // Detener el envío del formulario para validación
 
         var docEditable = $('#documentoEditable').val();
         var docPDF = $('#documentoPDF').val();

@@ -25,11 +25,12 @@ from django.views.decorators.http import require_http_methods
 
 # Create your views here.
 
-
+#metodo para asignar los entrenamientos ccorrespoendies de los usuarios
 def asignar_entrenamiento(request):
     template_name = 'Entrenamiento/asignar_entrenamiento.html'
     
     id_responsable = request.user.id
+    print(id_responsable)
     doc_pendientes = pendientes(id_responsable)
     usuarios_activos = PerfilUsuario.objects.filter(estado='ACTIVO')
     puestos = Puesto.objects.order_by('descripcion_general').values_list('descripcion_general', flat=True).distinct()
@@ -112,11 +113,13 @@ def asignar_entrenamiento(request):
                 )
                 nuevo_entrenamiento.save()
                 print(f"Guardado: {nuevo_entrenamiento}")
+            
                 
             for usuario_id in usuarios_ids:
                 usuario = User.objects.get(id=usuario_id)
+                doc = Documento.objects.get(id=id_documento)
                 usuario_entrenamiento = Entrenamiento(
-                    id_documento = id_documento,
+                    id_documento = doc,
                     id_usuario = usuario,
                     calificacion  = None,
                     estado = 'REALIZAR ENTRENAMIENTO'
@@ -124,15 +127,9 @@ def asignar_entrenamiento(request):
                 usuario_entrenamiento.save()
                 print(f"Guardado: {usuario_entrenamiento}")
                 
-                
-            
-                
-            
-            messages.success(request,"Se ha guardado la nomenclatura con todas las descripciones de puesto establecidas excluyendo las repetidas")
-            
+                  
             asignar_entrenamientofun(id_responsable,id_documento)
             
-            return redirect('home')
 
     context = {
         'documentos': doc_pendientes,
@@ -144,6 +141,7 @@ def asignar_entrenamiento(request):
 
 
 
+#metodo para cambiar el estauts al document una vez firmado el docuemnto de assingar a entrenamiento
 def asignar_entrenamientofun(id_usuario,Id_Documento):
     # Actualizar el estado del documento
     Documento.objects.filter(
@@ -165,6 +163,8 @@ def asignar_entrenamientofun(id_usuario,Id_Documento):
     nuevo_historial.save()
 
 
+
+#query de base de datos apara calcular nommenclaturas
 def calcular_nomenclatura(id_documento):
     # Función para calcular la nomenclatura del documento
     # Utilizamos annotations para concatenar diferentes campos de FK y construir la nomenclatura
@@ -172,7 +172,11 @@ def calcular_nomenclatura(id_documento):
         nomenclatura=Concat(
             F('id_plantilla__codigo'), Value('-'),
             F('id_linea__codigo_linea'), Value(' '),
-            F('consecutivo'), Value(' '),
+            Case(
+                When(consecutivo__lt=10, then=Concat(Value('0'), F('consecutivo'), output_field=CharField())),
+                default=F('consecutivo'),
+                output_field=CharField()
+            ),
             output_field=CharField()
         )
     ).first()
@@ -180,7 +184,7 @@ def calcular_nomenclatura(id_documento):
     return documento.nomenclatura if documento else None
 
 
-
+#ajax de javascritp que manda los usuarios con respceto al puestos
 def puestoajax (request):
     if request.method == 'POST':
         #print(request.POST)
@@ -209,6 +213,9 @@ def puestoajax (request):
 
     
     return JsonResponse({'error': 'Método no permitido'})
+
+
+
 
 def obtener_datos_usuarios(usuarios_nombres):
     nombres_puesto = []
@@ -245,7 +252,7 @@ def obtener_datos_usuarios(usuarios_nombres):
     
 
 
-    
+#QUERY PARA OBTENER LOS DOCUENTOS PENDIENTES PARA ASIGNAR ENTRENAMIENTO
 def pendientes(id_usuario):
     documentos = Documento.objects.filter(id_responsable=id_usuario, estado='ASIGNAR ENTRENAMIENTO').order_by('nombre').annotate(
         consecutivo_formatted=Case(
@@ -274,12 +281,12 @@ def pendientes(id_usuario):
         revision_actual = F('revision_documento'),
         id_documento=F('id')  # Agregar el ID del documento
     )
-    """
+    
     for documento in documentos:
-        #print("nombrexd:", documento.nombrexd)
-        #print("nombre_plantilla:", documento.nombre_plantilla)
-        #print("area:", documento.area)
-        #print("Revision Actual:", documento.revision_actual)
-        #print("id_documento:", documento.id_documento)
-    """
+        print("nombrexd:", documento.nombrexd)
+        print("nombre_plantilla:", documento.nombre_plantilla)
+        print("area:", documento.area)
+        print("Revision Actual:", documento.revision_actual)
+        print("id_documento:", documento.id_documento)
+    
     return documentos

@@ -2,10 +2,166 @@
 {% load static %}
 {% block title %}Home{% endblock title %}
 
+ <!-- Tus otras etiquetas <head> -->
 
+<style>
+    .custom-list li::before {
+        content: "• ";
+        color: #007bff; /* Color del punto decorativo */
+        font-weight: bold;
+        display: inline-block; 
+        width: 1em;
+        margin-left: -1em;
+    }
+</style>
 
 {% block content %}
 
-<h1>documents control</h1>
+
+<section class="container mt-5">
+    <h1 align="center">Control de Documentos</h1>
+    
+    <div class="row mt-5">
+        <div class="col-md-6">
+            <h2>Nuestra Misión</h2>
+            <p>Somos una empresa comprometida con la calidad y la innovación, dedicada a brindar las mejores soluciones en nuestra industria.</p>
+        </div>
+        <div class="col-md-6">
+            <h2>Nuestra Visión</h2>
+            <p>Aspiramos a ser líderes en el mercado global, reconocidos por nuestro impacto positivo en la sociedad y el medio ambiente.</p>
+        </div>
+    </div>
+    
+    <div class="row mt-5">
+        <div class="col-md-12">
+            <h2 class="text-center">Nuestros Valores</h2>
+        </div>
+    </div>
+    
+    <div class="row justify-content-around mt-5">
+        <div class="col-md-4">
+            <ul class="list-unstyled">
+                <li>Integridad</li>
+                <li>Innovación</li>
+                <li>Compromiso con el cliente</li>
+                <li>Responsabilidad social</li>
+            </ul>
+        </div>
+        <div class="col-md-4">
+            <ul class="list-unstyled">
+                <li>Colaboración</li>
+                <li>Excelencia</li>
+                <li>Sostenibilidad</li>
+                <li>Transparencia</li>
+            </ul>
+        </div>
+        <div class="col-md-4">
+            <ul class="list-unstyled">
+                <li>Respeto</li>
+                <li>Pasión</li>
+            </ul>
+        </div>
+    </div>    
+
+    <div class="row mt-5">
+        <div class="col-md-4">
+            <div class="card">
+                <img src="{% static 'img/mision.jpg' %}" class="card-img-top" alt="Misión">
+                <div class="card-body">
+                    <h5 class="card-title">Nuestra Misión</h5>
+                    <p class="card-text text-justify">Proveer soluciones de alta calidad que satisfagan las necesidades de nuestros clientes, mediante la innovación continua y el compromiso con la excelencia.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <img src="{% static 'img/vision.jpg' %}" class="card-img-top" alt="Visión">
+                <div class="card-body">
+                    <h5 class="card-title">Nuestra Visión</h5>
+                    <p class="card-text text-justify">Ser reconocidos como líderes en nuestra industria, estableciendo nuevos estándares de calidad y sostenibilidad, innovando continuamente, minimizando el impacto ambiental.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <img src="{% static 'img/valores.jpg' %}" class="card-img-top" alt="Valores">
+                <div class="card-body">
+                    <h5 class="card-title">Nuestros Valores</h5>
+                    <p class="card-text text-justify">Nuestros valores fundamentales son la integridad, la innovación, el compromiso con el cliente y la responsabilidad social. Estos valores guían todas nuestras decisiones y acciones.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-5">
+        <div class="col-md-12">
+            <h2>¿Por qué utilizar nuestro software?</h2>
+            <p>Nuestro software de control de documentos está diseñado para mejorar la eficiencia y la organización en tu empresa. Ofrecemos una solución integral que facilita la gestión, almacenamiento y recuperación de documentos, asegurando que tu equipo siempre tenga acceso a la información más actualizada y relevante.</p>
+            <p>Con nuestra herramienta, puedes simplificar y automatizar los procesos de gestión documental, reducir el riesgo de pérdida de información y garantizar el cumplimiento de normativas y estándares de calidad. Además, nuestro software se integra fácilmente con otras plataformas y aplicaciones que tu empresa ya utiliza, ofreciendo una experiencia de usuario coherente y sin interrupciones.</p>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <h2>Beneficios</h2>
+            <ul>
+                <li>Mejora la productividad al reducir el tiempo de búsqueda de documentos.</li>
+                <li>Incrementa la seguridad de la información mediante accesos controlados.</li>
+                <li>Facilita la colaboración entre equipos mediante el acceso compartido a documentos.</li>
+                <li>Automatiza procesos de archivo y recuperación de información.</li>
+                <li>Reduce costos operativos relacionados con la gestión documental.</li>
+                <li>Garantiza el cumplimiento de normativas y estándares de calidad.</li>
+                <li>Proporciona una vista consolidada de todos los documentos de la empresa.</li>
+            </ul>
+        </div>
+        <div class="col-md-6">
+            <h2>Características</h2>
+            <ul>
+                <li>Interfaz amigable y fácil de usar.</li>
+                <li>Integración con otros sistemas empresariales.</li>
+                <li>Soporte para múltiples formatos de documentos.</li>
+                <li>Reportes y análisis detallados del uso y gestión de documentos.</li>
+                <li>Automatización de flujos de trabajo y aprobación de documentos.</li>
+                <li>Acceso remoto y móvil para gestión de documentos en cualquier lugar.</li>
+                <li>Control de versiones y auditoría de cambios en los documentos.</li>
+                <li>Soporte técnico y actualizaciones regulares.</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<footer class="bg-light text-dark mt-5 py-4">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <h5>Contacto</h5>
+                <ul class="list-unstyled">
+                    <li><strong>Dirección:</strong> Calle Falsa 123, Ciudad, País</li>
+                    <li><strong>Teléfono:</strong> +123 456 789</li>
+                    <li><strong>Email:</strong> contacto@empresa.com</li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h5>Redes Sociales</h5>
+                <ul class="list-unstyled">
+                    <li><a href="#" class="text-dark">Facebook</a></li>
+                    <li><a href="#" class="text-dark">Twitter</a></li>
+                    <li><a href="#" class="text-dark">LinkedIn</a></li>
+                    <li><a href="#" class="text-dark">Instagram</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h5>Suscríbete</h5>
+                <form>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Correo electrónico:</label>
+                        <input type="email" class="form-control" id="email" placeholder="Tu correo electrónico">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Suscribirse</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</footer>
 
 {% endblock content %}

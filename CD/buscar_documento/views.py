@@ -10,9 +10,6 @@ from django.db.models import F, Value, CharField, Func, Case, When
 from django.db.models.functions import Concat
 from func.clases_de_documento import nomenclatura
 import subprocess
-
-from docx import Document
-
 import os
 from django.conf import settings
 
@@ -20,8 +17,9 @@ from django.conf import settings
 # Create your views here.
 from django.shortcuts import render, redirect
 
-#ME QUE DE AQUI ARREGLANGO EL BUEGEO
 # Create your views here.
+#renderia el formulario y al seelccionar el documento deseado abre el documento de office 
+#utilizando libreoffice de linux
 def buscar(request):
     plantillas_habilitadas = Plantilla.objects.filter(estado='HABILITADO').order_by('nombre')
     areas_habilitadas = Area.objects.all().order_by('area')
@@ -49,14 +47,14 @@ def buscar(request):
                 print("Si entre xd")
                 try:
                     codigo_plantilla, codigo_linea, consecutivo, rev, nombre = nomenclatura(nombre_documento)
-                    print('CODIGO', codigo_plantilla, 'CODIGO_LINEA', codigo_linea, 'TU CONSECUITVO:', consecutivo, 'REV', rev, 'NOMBRE', nombre)
+                    print('CODIGO', codigo_plantilla, 'CODIGO_LINEA', codigo_linea, 'TU CONSECUITVO:', consecutivo, 'REV.', rev, 'NOMBRE', nombre)
                     
                     documentos = Documento.objects.filter(
                         id_plantilla__codigo=codigo_plantilla,
                         id_linea__codigo_linea=codigo_linea,
                         nombre=nombre,
                         estado='APROBADO',
-                        consecutivo=consecutivo
+                        consecutivo=int(consecutivo)
                     )
                     
                     if documentos.exists():
@@ -86,8 +84,9 @@ def buscar(request):
     return render(request, 'documentos/buscar_documento.html', context)
 
 
-
+#Metodo que se encagar ede abrir documento
 def abrir_documento(plantilla,linea,nombre_documento):
+    print("Entre en abrir documento")
    
     file_path = os.path.join(settings.MEDIA_ROOT, 'Control_de_documentos_Editables', plantilla, linea, nombre_documento)
     
@@ -101,7 +100,7 @@ def abrir_documento(plantilla,linea,nombre_documento):
     else:
         return HttpResponse("El archivo no existe.", status=404)
 
-#obtener areas
+#obtener areas dinamicamente 
 def ajaxarchivo(request):
     tipo_de_plantilla = request.GET.get('nombre')
     area_seleccionada = request.GET.get('area')
@@ -160,7 +159,9 @@ def ajaxarchivo(request):
         return JsonResponse({'error': 'La plantilla no existe'}, status=404)
     except Exception as e:  # Para capturar cualquier otra excepción que pudiera ocurrir
         return JsonResponse({'error': str(e)}, status=500)
-
+    
+    
+#query para obtener  los documentos que esten en estado aprobado
 def get_documents(tipo_de_archivo, linea):
     documents = Documento.objects.annotate(
         Nombre_documento=Concat(
@@ -183,6 +184,7 @@ def get_documents(tipo_de_archivo, linea):
 
     return documents
 
+#obtener dinamciamicates las lineas con respecto el area
 def ajaxareas(request):
     # Filtra las líneas basándote en el área seleccionada
     area_seleccionadaxd = request.GET.get('areaSeleccionada')
@@ -220,8 +222,5 @@ def ajax_linea(request):
         return JsonResponse({'documentos': lista_documentos})
         
         
-
-        
-       
     return JsonResponse({'documentos': documentos}, safe=False)
      

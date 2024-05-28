@@ -62,23 +62,44 @@ def get_ruta_actual(id_documento):
 
 
 def get_ruta_obsoleta(id_documento):
-    documento = Documento.objects.select_related('id_plantilla', 'id_linea', 'id_linea__area').get(pk=id_documento)
-    plantilla, linea, _, rev_anterior, nombre_doc = nomenclatura(documento.nombre)
-    tipo = documento.id_plantilla.tipo_de_area
-    area = documento.id_linea.area.area
-    nomenclatura_anterior = f"{plantilla}-{linea} {documento.consecutivo} REV.{rev_anterior} {nombre_doc}"
+    try:
+        document = Documento.objects.filter(id=id_documento).annotate(
+            Nombre_Documento=Concat(
+                F('id_plantilla__codigo'), Value('-'),
+                F('id_linea__codigo_linea'), Value(' '),
+                Case(
+                    When(consecutivo='00', then=Value('00')),
+                    When(consecutivo__lt=10, then=Concat(Value('0'), F('consecutivo'), output_field=CharField())),
+                    default=F('consecutivo'),
+                    output_field=CharField()
+                ),
+                Value(' REV. '),
+                F('revision_documento'), Value(' '),
+                F('nombre'),
+                output_field=CharField()
+            )
+        ).select_related('id_plantilla', 'id_linea').first()
 
-    if tipo == '2' or (tipo == '4' and area == 'Departamento'):
-        ruta_obsoleta_destino = f"\\{plantilla}\\{linea}\\OBSOLETO\\{nomenclatura_anterior}"
-        ruta_obsoleta_actual = f"\\{plantilla}\\{linea}\\{nomenclatura_anterior}"
-    elif tipo in ['1', '4']:
-        ruta_obsoleta_destino = f"\\{plantilla}\\Clientes\\{area}\\{linea}\\OBSOLETO\\{nomenclatura_anterior}"
-        ruta_obsoleta_actual = f"\\{plantilla}\\Clientes\\{area}\\{linea}\\{nomenclatura_anterior}"
-    else:
-        ruta_obsoleta_destino = f"\\Plantillas\\OBSOLETO\\{nomenclatura_anterior}"
-        ruta_obsoleta_actual = f"\\Plantillas\\{nomenclatura_anterior}"
+        if not document:
+            raise ValueError("Documento no encontrado.")
 
-    return ruta_obsoleta_actual, ruta_obsoleta_destino
+        # Calcula la revisión anterior
+        rev = int(document.revision_documento)
+        rev_anterior = f"{rev - 1:02d}"
+        nombre_archivo = document.Nombre_Documento
+        no_documento, no_linea, consecutivo, revision, nombre_del_documento = nomenclatura(nombre_archivo)
+        nomenclatura_anterior = f"{no_documento}-{no_linea} {consecutivo} REV. {rev_anterior} {nombre_del_documento}"
+
+        base_path = f"{document.id_plantilla.nombre}/{document.id_linea.nombre_linea}"
+        ruta_obsoleta_destino = f"/{base_path}/OBSOLETO/{nomenclatura_anterior}"
+        ruta_obsoleta_actual = f"/{base_path}/{nomenclatura_anterior}"
+
+        print(ruta_obsoleta_actual, ruta_obsoleta_destino)
+        return ruta_obsoleta_actual, ruta_obsoleta_destino,base_path
+
+    except Exception as e:
+        print(f"Error al obtener la ruta obsoleta: {e}")
+        return None, None
 
 
 

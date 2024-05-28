@@ -7,10 +7,12 @@ from django.utils import timezone
 from datetime import timedelta
 
 # Create your views here.
+
+#Metodo para bloquear el documento  
 def blockdoc(request):
     template = 'documentos/bloquear_documento.html'
     
-    
+    #query que muestre los documentos que esta en estado de En edición
     documentos_bloqueados = DocumentoBloqueado.objects.filter(estado='En edición').annotate(
         nombre=Concat(F('id_responsable__first_name'), Value(' '), F('id_responsable__last_name'), output_field=CharField())
     ).values(
@@ -38,13 +40,12 @@ def blockdoc(request):
     
     return render(request,template,context)
 
-
+#Metod ono elimina el document obloqueado relacionado con la nomenclatura seleccioando por el usuario
 def ajax_nomnenclatura(request,nomenclatura):
     if request.method == 'POST':
         print(nomenclatura)
         documento = get_object_or_404(DocumentoBloqueado, nomenclatura=nomenclatura, estado='En edición')
-        documento.estado = 'Desbloqueado'
-        documento.save()
+        documento.delete()
         return JsonResponse({'status': 'ok'})
     else:
         return JsonResponse({'status': 'error'}, status=400)

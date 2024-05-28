@@ -4,12 +4,13 @@
  *
  * To rebuild or modify this file with the latest versions of the included
  * software please visit:
- *   https://datatables.net/download/#bs5/jszip-3.10.1/pdfmake-0.2.7/dt-2.0.7/af-2.7.0/b-3.0.2/b-colvis-3.0.2/b-html5-3.0.2/b-print-3.0.2/cr-2.0.2/date-1.5.2/fc-5.0.0/fh-4.0.1/kt-2.12.0/r-3.0.2/rg-1.5.0/rr-1.5.0/sc-2.4.2/sb-1.7.1/sp-2.3.1/sl-2.0.1/sr-1.4.1
+    https://datatables.net/download/#bs5/jszip-3.10.1/pdfmake-0.2.7/dt-2.0.7/af-2.7.0/b-3.0.2/b-colvis-3.0.2/b-html5-3.0.2/b-print-3.0.2/cr-2.0.2/date-1.5.2/fc-5.0.0/fh-4.0.1/kt-2.12.0/r-3.0.2/rg-1.5.0/rr-1.5.0/sc-2.4.2/sb-1.7.1/sp-2.3.1/sl-2.0.1/sr-1.4.1
  *
  * Included libraries:
  *   JSZip 3.10.1, pdfmake 0.2.7, DataTables 2.0.7, AutoFill 2.7.0, Buttons 3.0.2, Column visibility 3.0.2, HTML5 export 3.0.2, Print view 3.0.2, ColReorder 2.0.2, DateTime 1.5.2, FixedColumns 5.0.0, FixedHeader 4.0.1, KeyTable 2.12.0, Responsive 3.0.2, RowGroup 1.5.0, RowReorder 1.5.0, Scroller 2.4.2, SearchBuilder 1.7.1, SearchPanes 2.3.1, Select 2.0.1, StateRestore 1.4.1
  */
 
+ 
 @charset "UTF-8";
 :root {
   --dt-row-selected: 13, 110, 253;

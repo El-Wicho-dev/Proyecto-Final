@@ -11,11 +11,17 @@ from django.db.models.functions import Concat, Cast
 from Entrenamiento.models import Entrenamiento,EntrenamientoPuestoNomenclatura,Firma
 from Documentos.models  import Documento,Plantilla
 from Usuarios.models import UnidadNegocio,Puesto,UsuarioPuesto,PerfilUsuario
+from func.clases_de_documento import nomenclatura
+from func.guardar_documento import GuardarDocumento
+
+
 
 
 
 #@transaction.atomic
-def aprobar_entrenamiento(id_documento, nombre_documento, id_usuario):
+
+#mETODO 
+def aprobar_entrenamiento(id_documento, id_usuario):
     print("hola si funciono jeje")
     
     documento = Documento.objects.get(id=id_documento)
@@ -35,95 +41,57 @@ def aprobar_entrenamiento(id_documento, nombre_documento, id_usuario):
             accion='ENTRENAMIENTO APROBADO'
         )
 
-        """
-        # Enviar correo electrónico al responsable del documento
-        correo_responsable = User.objects.filter(id_usuario=liberar_documento.id_responsable).values_list('correo', flat=True).first()
-        if correo_responsable:
-            send_mail(
-                'Entrenamiento validado',
-                f'El entrenamiento del documento {nombre_documento} fue aceptado. El documento será enviado a revisión por Control de Documentos.',
-                settings.DEFAULT_FROM_EMAIL,
-                [correo_responsable],
-                fail_silently=False,
-            )
-
-        # Enviar correo electrónico a los usuarios relevantes
-        correos_administradores = User.objects.filter(puestos_empleados__puesto__descripcion_general__icontains='documentos') \
-                                                 .filter(estado='ACTIVO') \
-                                                 .exclude(correo='') \
-                                                 .values_list('correo', flat=True)
-        if correos_administradores:
-            send_mail(
-                'Documento pendiente por liberar',
-                f'El documento {nombre_documento} ya fue aprobado por entrenamiento y sellado, por lo que está listo para ser liberado.',
-                settings.DEFAULT_FROM_EMAIL,
-                list(correos_administradores),
-                fail_silently=False,
-            )
-        """
-        # Guardar PDF
-        #ruta_pdf = finders.find('PDF_PRELIBERADO')  # Ruta donde se guardarán los PDFs
-        #FirmarDocumentos.guardar_pdf(nombre_documento)
-
     except Exception as e:
         # Manejo de errores
         print(f'Hubo un error al aprobar el entrenamiento: {e}')
         raise
 
 
-def cargar_documento(id_documento,name_document,id_usuario):
-    
-    print("hola si funciono en cargar documento ")
+#Metodo para cargar e ldocument ocambiar el estatus del document oaprobado  a la que se estan liberando
+def cargar_documento(id_documento,name_document,id_usuario,tipo_documento):
+  
+    print(id_documento,name_document,tipo_documento)
     
     documento = Documento.objects.get(id=id_documento)
     usuario = User.objects.get(id=id_usuario)
-            
+    
+    guardar_documento = GuardarDocumento(settings.RUTA_EDITABLES_DOCUMENTOS)
+                    # Luego llama al método get_ruta
+    ruta_archivo = guardar_documento.guardar_documento(id_documento,name_document)
+    
+    
     try:
         # Actualizar el estado del documento
         liberar_documento = Documento.objects.get(id=id_documento)
         liberar_documento.estado = 'APROBADO'
         liberar_documento.fecha_finalizacion = timezone.now()
         liberar_documento.save()
-
-        # Registrar quién aprobó el entrenamiento
-        Historial.objects.create(
-            id_documento=documento,
-            id_responsable=usuario,
-            fecha=timezone.now(),
-            accion='DOCUMENTO LIBERADO'
-        )
-        
     except Exception as e:
         # Manejo de errores
         print(f'Hubo un error al aprobar el entrenamiento: {e}')
         raise
     
-
-def rechazar_documento(self):
-        try:
-            # Mandar correo
-            send_mail(
-                'Documento rechazado',
-                f'El trabajador {self.revisador.username} de Amphenol Otay ha rechazado su archivo {self.nombre} con el comentario: {self.comentarios}',
-                settings.EMAIL_HOST_USER,  # Coloca aquí el correo electrónico del remitente
-                [self.aprobador.email],  # Lista de correos electrónicos de los destinatarios
-                fail_silently=False,
+    
+    if tipo_documento == 'PLANTILLA':
+        no_documento,no_linea,consecutivo,revision,nombre_del_documento = nomenclatura(name_document)
+        
+        ruta_completa = f'{settings.RUTA_EDITABLES}{ruta_archivo}'
+        
+        if revision != '00':
+            Plantilla.objects.filter(ruta__contains=f'TM-DC {consecutivo}').update(ruta =ruta_completa, revision_actual=int(revision))
+            
+               # Registrar quién aprobó el entrenamiento
+            Historial.objects.create(
+                id_documento=documento,
+                id_responsable=usuario,
+                fecha=timezone.now(),
+                accion='DOCUMENTO LIBERADO'
             )
+            
 
-            # Actualizar registro
-            self.estado = 'RECHAZADO'
-            self.fecha_finalizacion = timezone.now()
-            self.save()
 
-            return 1  # Resultado de éxito
-
-        except Exception as e:
-            # Manejo de errores
-            print(f'Hubo un error al rechazar el documento: {e}')
-            return 0  # Resultado de error
         
-        
-        
+#Metodo en dodne consulta la matriz de entrenamiento
 def cargar_matriz():
     matriz = []
 

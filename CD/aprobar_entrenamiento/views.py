@@ -25,138 +25,79 @@ from func.loading import aprobar_entrenamiento
 
 
 # Create your views here.
+
+#METODO PARA APROBAR EL ENTRENAMIENTO
 def aprobar(request):
     template_name = "Entrenamiento/aprobar_entrenamiento.html"
-    
     nombre_documento = doc_pendientes()
-    
-    action = request.POST.get('action')
-    comment = request.POST.get('comment', '')
-    print(request.POST)
+    entrenamiento_doc = None
+    file_path = None
 
-    # Obtén los documentos seleccionados de la sesión
-    documento_seleccionado = request.session.get('documentos', [])
-    
-    # Verifica si la lista está vacía y elimina la clave si es necesario
-    if not documento_seleccionado:
-        request.session.pop('documentos', None)
-        # No redirigir aquí, en su lugar mostrar un mensaje y continuar
-        documento_seleccionado = []  # Asegura que la lista esté vacía
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        documento_seleccionado = request.POST.get('reviewInput', '')
+        comment = request.POST.get('comment', '')
 
-    # Asume que siempre hay un documento en la lista seleccionada y toma el primero si hay alguno
-    if documento_seleccionado:
-        id_archivo = documento_seleccionado[0]['id']
-        print("id documento:", id_archivo)
+        if action == 'search' and documento_seleccionado:
+            documentos = select_documento(documento_seleccionado)
+            if documentos:
+                id_archivo = documentos[0]['id']
+                request.session['id_archivo'] = id_archivo  # Guardar en la sesión
+                entrenamiento_doc = informaciondocs(id_archivo)
+                linea_documento = entrenamiento_doc[0]['id_linea__nombre_linea']
+                tipo_de_plantilla = entrenamiento_doc[0]['id_plantilla__nombre']
+                documento_pdf = cambiar_la_extencion(documento_seleccionado)
+                file_path = os.path.join(settings.MEDIA_URL, 'Control_de_documentos_pdfs', tipo_de_plantilla, linea_documento, documento_pdf)
 
-        # Obtén la información del entrenamiento
-        entrenamientos = Entrenamiento.objects.filter(id_documento=id_archivo).annotate(
-            nombre_completo=Concat(
-                F('id_usuario__first_name'),
-                Value(' '),
-                F('id_usuario__last_name'),
-                output_field=CharField()
-            )
-        ).values(
-            'nombre_completo', 'calificacion', 'fecha'
-        )
+        elif action == 'sign':
+            id_archivo = request.session.get('id_archivo')
+            if id_archivo:
+                    # Lógica para firmar el documento
+                    aprobar_entrenamiento(id_archivo, request.user.id)
+                    messages.success(request, "Documento firmado exitosamente.")
+                    request.session.pop('id_archivo', None)
 
-        for entrenamiento in entrenamientos:
-            print(entrenamiento['nombre_completo'])
-
-        # Obtén la información del documento
-        entrenamiento_doc = informaciondocs(id_archivo)
-
-        # Variables para almacenar la información del documento
-        linea_documento = ""
-        nombre_doc = ""
-        tipo_de_plantilla = ""
-
-        # Iterar sobre el queryset y imprimir cada campo anotado
-        for documento in entrenamiento_doc:
-            print("Responsable:", documento['Responsable'])
-            print("Reviso:", documento['Reviso'])
-            print("Autorizo:", documento['Autorizo'])
-            print("Revison del documento:", documento['revision_documento'])
-            print("Linea del documento:", documento['id_linea__nombre_linea'])
-            linea_documento = documento['id_linea__nombre_linea']
-            nombre_doc = documento['Nombre_Documento']
-            print("Nombre del Documento:", nombre_doc)
-            print("tipo de Documento:", documento['id_plantilla__nombre'])
-            tipo_de_plantilla = documento['id_plantilla__nombre']
-
-        # Cambiar la extensión del documento
-        documento_pdf = cambiar_la_extencion(nombre_doc)
-
-        # Construir la ruta del archivo PDF solo si hay documentos disponibles
-        if nombre_doc:
-            file_path = os.path.join(settings.MEDIA_URL, 'Control_de_documentos_pdfs', tipo_de_plantilla, linea_documento, documento_pdf)
-        else:
-            file_path = None  # No hay documento disponible
+                    return redirect('home')
+            else:
+                messages.error(request, "No existe un documento seleccionado para firmar.")
         
-        print('tu ruta', file_path)
 
-        if action == 'sign':
-            print("entre al boton de firmar")
-            
-            if not nombre_documento:
-                messages.error(request, "No hay documentos seleccionados.")
-                return render(request, template_name, {
-                    'documentos': nombre_documento,
-                    'entrenamiento_info': [],
-                    'doc_pdf': None
-                })
-                    
-            aprobar_entrenamiento(id_archivo, nombre_doc, request.user.id)
-            messages.success(request, "Documento firmado exitosamente.")
-            return redirect('home')
 
         elif action == 'reject':
-            print("entre al boton de rechazar")
             
-            if not nombre_documento:
-                messages.error(request, "No hay documentos seleccionados.")
-                return render(request, template_name, {
-                    'documentos': nombre_documento,
-                    'entrenamiento_info': [],
-                    'doc_pdf': None
-                })
-            
-            documento = Documento.objects.get(id=id_archivo)
-            usuario = User.objects.get(id=request.user.id)
-            
-            Documento.objects.filter(id=id_archivo).update(estado='ASIGNAR ENTRENAMIENTO')
-            
-            alta_historial = Historial.objects.create(
-                    id_documento=documento,
-                    id_responsable=usuario,
-                    fecha=timezone.now(),
-                    accion='ENTRENAMIENTO RECHAZADO'
-                )
-            alta_historial.save()
-            
-            Entrenamiento.objects.filter(id_documento=id_archivo).update(estado='REALIZAR ENTRENAMIENTO', calificacion=None)
-            
-            messages.error(request, "El documento ha sido rechazado.")
-            return redirect('home')
-    else:
-        # No hay documentos seleccionados
-        entrenamientos = []
-        entrenamiento_doc = []
-        file_path = None
+            id_archivo = request.session.get('id_archivo')
+            if id_archivo:
+                documento = Documento.objects.get(id=id_archivo)
+                usuario = User.objects.get(id=request.user.id)
+                Documento.objects.filter(id=id_archivo).update(estado='ASIGNAR ENTRENAMIENTO')
+                
+                alta_historial = Historial.objects.create(
+                        id_documento=documento,
+                        id_responsable=usuario,
+                        fecha=timezone.now(),
+                        accion='ENTRENAMIENTO RECHAZADO'
+                    )
+                alta_historial.save()
+                
+                Entrenamiento.objects.filter(id_documento=id_archivo).update(estado='REALIZAR ENTRENAMIENTO', calificacion=None)
+                messages.error(request, "El documento ha sido rechazado.")
+                request.session.pop('id_archivo', None)
+
+                return redirect('home')
+            else:
+                messages.error(request, "No existe un documento seleccionado para rechazar.")
+        
 
     context = {
         'documentos': nombre_documento,
         'entrenamiento_info': entrenamiento_doc,
-        'doc_pdf': file_path  # Solo incluye la ruta del PDF si hay documentos
+        'doc_pdf': file_path
     }
-        
+    
     return render(request, template_name, context)
 
 
-
-
-
-
+#query para saber los pendientes que tiene le usuario de aprobar entrenamiento
 def doc_pendientes():
     # Asegurándonos de que los Documentos están en el estado 'APROBADO'
    # Consulta ORM con condiciones
@@ -185,6 +126,7 @@ def doc_pendientes():
     
     return documentos
 
+#query de base de datos datos cuand se seleccione un dcouemnto
 def select_documento(documento_seleccionado):
     documentos = Documento.objects.annotate(
         nombre_documento=Concat(
@@ -211,6 +153,7 @@ def select_documento(documento_seleccionado):
     
     return documentos
 
+#query de base de datos para obtener resposable , Reviso, Autorizo, Nombre_Documento
 def informaciondocs(id_documento):
     # Asegúrate de que 'Id_Documento' es una variable existente que contiene el ID deseado
     documentos_entrenamiento = Documento.objects.filter(id=id_documento).annotate(
@@ -240,9 +183,13 @@ def ajaxdocument_details(request):
     if request.method == 'POST':
         print(request.POST)
         nombre_documento = request.POST.get('nombre_documento', None)
+        action = request.POST.get('action')
+
         
         if nombre_documento == '':
+
             print("si entre xddda")
+            
             request.session.pop('documentos', None)
         
         if nombre_documento:
@@ -256,7 +203,9 @@ def ajaxdocument_details(request):
 
         
         return JsonResponse({'success': 200})
-
+    
+    
+#metodo para cambiar la extension del documento    
 def cambiar_la_extencion(nombre_documento):
     # Separar el nombre base y la extensión
     base_nombre, ext = os.path.splitext(nombre_documento)
