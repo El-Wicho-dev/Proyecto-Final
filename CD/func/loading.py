@@ -103,7 +103,7 @@ def cargar_matriz():
     # Query documents
     documents = (Documento.objects
                  .filter(
-                     Q(id_plantilla__nombre='PROCEDIMIENTO') | Q(id_plantilla__nombre='FORMATOS'),
+                     Q(id_plantilla__nombre='AYUDA VISUAL') | Q(id_plantilla__nombre='FORMATOS'),
                      estado='APROBADO'
                  )
                  .distinct()
@@ -163,11 +163,10 @@ def cargar_matriz():
                 entrenamiento_puesto_nomenclatura = (EntrenamientoPuestoNomenclatura.objects
                                                      .filter(
                                                          id_puesto=puesto,
-                                                         nomenclatura=nomenclatura,
-                                                         id_unidad_negocio=puesto.por_unidad_negocio
+                                                         nomenclatura=nomenclatura
                                                      )
                                                      .exists())
-                row[nomenclatura] = 'X' if entrenamiento_puesto_nomenclatura else 'NA'
+                row[nomenclatura] = 'X' if entrenamiento_puesto_nomenclatura else 'N/A'
                 if row[nomenclatura] == 'X':
                     completed_count += 1
 
@@ -200,12 +199,16 @@ def cargar_matriz():
                     entrenamiento = (Entrenamiento.objects
                                      .filter(
                                          id_documento__estado='APROBADO',
-                                         id_usuario=usuario.user,
+                                         id_usuario=usuario.user.id,
                                          id_documento__id_plantilla__codigo=nomenclatura.split('-')[0],
                                          id_documento__id_linea__codigo_linea=nomenclatura.split('-')[1].split(' ')[0],
-                                         id_documento__consecutivo=nomenclatura.split(' ')[1]
+                                         id_documento__consecutivo=int(nomenclatura.split(' ')[1])
                                      )
                                      .exists())
+                    print('codigo de nomenclatura', nomenclatura.split('-')[0])
+                    print('codigo de nomenclatura2', nomenclatura.split('-')[1].split(' ')[0])
+                    print('codigo de nomenclatura3', nomenclatura.split(' ')[1])
+                    
                     user_row[nomenclatura] = 'C' if entrenamiento else '0'
                     if user_row[nomenclatura] == 'C':
                         completed_count += 1

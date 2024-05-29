@@ -10,7 +10,17 @@
 <div class="container-fluid mt-5">
     <h2 align="center">Matriz de Entrenamiento</h2>
 
+
+
 <div class="table-responsive">
+        
+    <!-- Symbology Section -->
+    <div class="mb-3">
+        <span class="badge bg-primary text-white p-2 mr-2">X</span>Aplica
+        <span class="badge bg-danger text-white p-2 mx-2">O</span>No Aplica
+        <span class="badge bg-success text-white p-2 mx-2">C</span>Completado
+        <span class="badge bg-secondary text-white p-2 ml-2">N/A</span>No Aplica
+    </div>
     <table id="matriz" class="table table-striped table-bordered">
         <thead>
             <tr>
@@ -36,11 +46,42 @@
 
 <script>
     $(document).ready(function() {
-        $('#matriz').DataTable();
+        // Inicializar DataTable
+        var table = $('#matriz').DataTable();
 
-       
+        // Función para aplicar colores
+        function applyColors() {
+            $('#matriz tbody tr').each(function() {
+                $(this).find('td').each(function() {
+                    var value = $(this).text().trim();
+                    switch(value) {
+                        case 'X':
+                            $(this).addClass('bg-primary text-white');
+                            break;
+                        case '0':
+                            $(this).addClass('bg-danger text-white');
+                            break;
+                        case 'C':
+                            $(this).addClass('bg-success text-white');
+                            break;
+                        case 'N/A':
+                            $(this).addClass('bg-secondary text-white');
+                            break;
+                    }
+                });
+            });
+        }
+
+        // Aplicar colores después de que DataTables esté listo y también después de cualquier redibujado de la tabla
+        table.on('draw', function() {
+            applyColors();
+        });
+
+        // Aplicar colores inicialmente
+        applyColors();
     });
 </script>
+
     
 
 {% endblock content %}

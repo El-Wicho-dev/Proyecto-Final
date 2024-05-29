@@ -26,9 +26,7 @@ class Plantilla(models.Model):
     nombres_plantillas_choices = [
         ('FORMATOS','FORMATOS'),
         ('GUIAS','GUIAS'),
-        ('PROCEDIMIENTO','PROCEDIMIENTO'),
         ('AYUDA VISUAL','AYUDA VISUAL'),
-        ('PLANTILLA','PLANTILLA'),
         ('DIAGRAMA DE FLUJO', 'DIAGRAMA DE FLUJO'),
     ]
     nombres_autor_choices = [

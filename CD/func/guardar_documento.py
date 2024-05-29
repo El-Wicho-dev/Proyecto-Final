@@ -1,7 +1,7 @@
 from django.db.models import F, Value, Case, When, CharField
 from django.db.models.functions import Concat,Cast
 from django.shortcuts import get_object_or_404
-from Documentos.models  import Documento,Linea,Plantilla
+from Documentos.models  import Documento,Linea,Plantilla,DocumentoBloqueado
 from func.clases_de_documento import get_ruta_actual,nomenclatura
 from django.conf import settings
 from func.firmar_documento import  FirmarDocumentos 
@@ -106,6 +106,16 @@ class GuardarDocumento:
         
         no_documento,no_linea,consecutivo,revision,nombre_del_documento = nomenclatura(nombre)
         print(nombre_del_documento)
+        
+        nomeclaturadelete = f'{no_documento}-{no_linea} {consecutivo}'
+        
+        
+        print("la nomenclatura que vas eliminar es: ", nomeclaturadelete)
+        
+        
+        DocumentoBloqueado.objects.filter(nomenclatura=nomeclaturadelete).delete()
+        
+        
     
         # Procesar versiones obsoletas si la revisión no es '00'
         if revision != "00":
@@ -142,7 +152,7 @@ class GuardarDocumento:
             self.process_word_document(ruta_word_actual_obsoleta,ruta_word_proximo_obsoleta)
             # Marcar documento anterior como obsoleto en la base de datos
             Documento.objects.filter(nombre=nombre_del_documento, estado='APROBADO').update(estado='OBSOLETO')
-
+            
 
         
         

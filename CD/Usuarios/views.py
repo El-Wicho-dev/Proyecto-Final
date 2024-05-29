@@ -44,6 +44,7 @@ def add_profile(request, user_id):
             
             puesto = puesto_form.save()
             UsuarioPuesto.objects.create(usuario=user, puesto=puesto)
+            messages.success(request,"Se dio Alta el Usuario")
             return redirect('home')  # o donde quieras redirigir después
     else:
         puesto_form = PuestoForm()

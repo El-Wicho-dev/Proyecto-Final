@@ -4,7 +4,6 @@ from django.dispatch import receiver
 from django.http import HttpResponseForbidden
 from django.db.models.signals import post_save
 
-
 # Create your models here.
 
 
@@ -22,7 +21,7 @@ def descripcion_general_required(descripcion):
     return decorator
 
 
-# Modelo para Usuarios
+# Modelo para Usuarioss
 class PerfilUsuario(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)  # Falta la relación con el User
     no_empleado = models.CharField(max_length=20)

@@ -49,7 +49,7 @@ def adddoc(request):
                         plantilla_seleccionada = documento_form.cleaned_data['id_plantilla']
                         plantilla_nombre = plantilla_seleccionada.nombre
                         plantilla_codigo = plantilla_seleccionada.codigo
-                        nombre_documento = documento_form.cleaned_data['nombre']
+                        nombre_documento = documento_form.cleaned_data['nombre'] 
                         
                         rutadoc = f'{plantilla_nombre}/{nombre_linea}/{plantilla_codigo}-{codigo_linea} {consecutivo_str} REV. {revision} {nombre_documento}.docx'
                         rutapdf = f'{plantilla_nombre}/{nombre_linea}/{plantilla_codigo}-{codigo_linea} {consecutivo_str} REV. {revision} {nombre_documento}.pdf'
@@ -62,6 +62,12 @@ def adddoc(request):
                         pdf_file_path = f'Control_de_documentos_pdfs/{rutapdf}'
                         default_storage.save(pdf_file_path, ContentFile(pdf_file.read()))
                         
+                        documento.nombre = nombre_documento  + '.docx' # Asegúrate de que 'nombre_archivo' es el campo correcto en tu modelo Documento
+                        documento.consecutivo = int(consecutivo)
+                        documento.revision_de_plantilla = int(revision_plantilla)
+                        documento.comentarios = 'Documento dado de alta manualmente'
+
+                        print("inserte este nombre: ",f'{ nombre_documento}.docx')
                         documento.save()
                         
                         messages.success(request, 'Los datos se han guardado correctamente.')

@@ -19,7 +19,9 @@ from django.db.models import F, Value , CharField,Func
 from django.db.models.functions import Concat,Cast
 from django.db.models.expressions import Case, When
 from func.guardar_documento import GuardarDocumento
+from func.clases_de_documento import nomenclatura_plantilla
 import os
+import re
 
 # Create your views here.
 
@@ -465,24 +467,32 @@ def cD_Boton1_Click(request):
             print("Entre al metodo Plantilla")
             nombre_archivo = os.path.basename(nombreDocumento)
             nombre_parts = nombre_archivo.split('_')
+            print(nombre_parts)
             if len(nombre_parts) >= 3:
                 revision_actual_part = nombre_parts[2]
                 revision_actual = revision_actual_part.split('.')[1]
                 try:
                     nueva_revision = str(int(revision_actual) + 1).zfill(2)
                     consecutivo_nuevo = nueva_revision
-                    nombre_parts[2] = f"REV.{nueva_revision}"
-                    nuevo_nombre = "_".join(nombre_parts[:-1]) + "_" + nombre_parts[-1].split('.')[0]
-                    nombre_del_documento = nuevo_nombre
+                 
+                    no_documento, no_linea, consecutivo, revision, nombre_doc = nomenclatura_plantilla(nombre_archivo)
                     
+                    nomenclatura = f'{no_documento}-{no_linea} {consecutivo_nuevo}'
                     
-                    nombre_temp = f"{codigo_Docum}-{codigo_linea} {consecutivo_nuevo}"
+                    nombre_del_documento = f'{no_documento}-{no_linea} {consecutivo} REV. {consecutivo_nuevo} {nombre_doc}.docx'
+                    nombre_del_documento_sin_ext = f'{no_documento}-{no_linea} {consecutivo} REV. {consecutivo_nuevo} {nombre_doc}'
+
+                                        
+                    
+                    print("nombrel de documento: " , nombre_del_documento)
+                    print("nomenclatura  es: ", nomenclatura)
+                    print("ruta del documento: ", ruta_docum)
 
                     #Metodo para insertar en la abse de datos 
-                    insertdoc_block(nombre_temp,request.user,nombre_del_documento)
+                    insertdoc_block(nomenclatura,request.user,nombre_del_documento_sin_ext)
 
                     #Manda  al mentodo para la descargar del archivo 
-                    response = copy_file_and_provide_download_url(request, ruta_docum, nuevo_nombre)
+                    response = copy_file_and_provide_download_url(request, nombreDocumento, nombre_del_documento)
                     return response
                 
                 except ValueError:

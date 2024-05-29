@@ -134,7 +134,7 @@ DATABASES = {
         'NAME': 'Control_de_Documentos',
         'USER': 'root',
         'PASSWORD': '0109',
-        'HOST': '127.0.0.1',
+        'HOST': 'host.docker.internal',
         'PORT': '5432',
     }
 }

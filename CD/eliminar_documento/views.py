@@ -64,50 +64,24 @@ def deletedoc(request):
                 
                 if documento_xd:
                     
-                    
                     id_documento_delete = documento_xd[0]['id']
                     
                     print('TU ID PARA ELIMINAR ES: ',id_documento_delete)
                     
                     
                      #print(id_documento)
-                    #FSFirma.objects.filter(id_documento=id_documento).delete()
+                    Firma.objects.filter(id_documento=id_documento_delete).delete()
+                    Entrenamiento.objects.filter(id_documento=id_documento_delete).delete()
+                    Historial.objects.filter(id_documento=id_documento_delete).delete()
+                    Documento.objects.filter(id=id_documento_delete).delete()
+                    
 
-                    #Eliminar registros en CD_Entrenamientos
-                    #Entrenamiento.objects.filter(id_documento=id_documento).delete()
-
-                    # Eliminar registros en CD_Historial_Aprobacion_Entrenamientos
-                    #Historial.objects.filter(id_documento=id_documento).delete()
-
-                    # Eliminar registros en CD_Liberar_Documento
-                    #Documento.objects.filter(id=id_documento).delete()
                     
                     #TENGO QUE HACER TAMBIEN ELIMNE EL DOCUMENTO RESPECTIVO
 
-                    messages.success(request,"El documento ha sido desbloqueado de manera exitosa")
+                    messages.success(request,"El documento ha sido Eliminado de manera exitosa")
                     
                     return redirect("deletedoc")
-                
-            
-            
-
-                #print(id_documento)
-                #Firma.objects.filter(id_documento=id_documento).delete()
-
-                # Eliminar registros en CD_Entrenamientos
-                #Entrenamiento.objects.filter(id_documento=id_documento).delete()
-
-                # Eliminar registros en CD_Historial_Aprobacion_Entrenamientos
-                #Historial.objects.filter(id_documento=id_documento).delete()
-
-                # Eliminar registros en CD_Liberar_Documento
-                #Documento.objects.filter(id=id_documento).delete()
-                
-                #TENGO QUE HACER TAMBIEN ELIMNE EL DOCUMENTO RESPECTIVO
-                
-            
-                
-            
 
     context = {
         'nomenclatura_text': nomenclatura,

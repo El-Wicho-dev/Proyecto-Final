@@ -1,9 +1,12 @@
-from django.shortcuts import render
+from django.shortcuts import render,redirect
 from django.http import JsonResponse,HttpResponse
 from Documentos.models import Documento,Plantilla
 from Usuarios.models import Linea
 from django.db.models import Case, When, Value, CharField, F
+from django.core.files.storage import default_storage
 from django.db.models.functions import Concat
+from django.contrib import messages
+from django.conf import settings
 from func.clases_de_documento import nomenclatura 
 import os
 
@@ -11,49 +14,52 @@ import os
 def update_document(request):
     template = 'documentos/actualizar_documento.html'
     if request.method == 'POST':
-        print(request.FILES)
         documento_editable = request.FILES.get('documentoEditable')
         documento_pdf = request.FILES.get('documentoPDF')
         idnomenclatura = request.POST.get('nomenclatura', '')
         
-        print("Documento editable recibido:", documento_editable)
-        print("Documento PDF recibido:", documento_pdf)
-        print("Nomenclatura seleccionada:", idnomenclatura)
-        
         documentos = informaciondocs(idnomenclatura)
         
         if documentos:
-        
             nombre_de_documento = documentos.nombre_documento
-            print(nombre_de_documento)
             
-            no_documento,no_linea,consecutivo,revision,nombre_del_documento = nomenclatura(nombre_de_documento)
+            no_documento, no_linea, consecutivo, revision, nombre_del_documento = nomenclatura(nombre_de_documento)
             
-            
-            Lineas = Linea.objects.get(codigo_linea = no_linea)
+            Lineas = Linea.objects.get(codigo_linea=no_linea)
             nombre_linea = Lineas.nombre_linea
             
-            Plantillas = Plantilla.objects.get(codigo = no_documento)
+            Plantillas = Plantilla.objects.get(codigo=no_documento)
             tipo_de_plantilla = Plantillas.nombre
             
-            print(nombre_linea)
+            base_nombre_documento = nombre_de_documento.rsplit('.', 1)[0]  # Quitar la extensión actual
             
+            ruta_Editable_remplazo = f'{settings.MEDIA_ROOT_EDITABLE}/{tipo_de_plantilla}/{nombre_linea}/{base_nombre_documento}.docx'
+            ruta_pdf_remplazo = f'{settings.MEDIA_ROOT_PDF}/{tipo_de_plantilla}/{nombre_linea}/{base_nombre_documento}.pdf'
             
-            print(tipo_de_plantilla)
-            
-            
+            if documento_editable:
+                # Borrar el archivo actual si existe
+                if default_storage.exists(ruta_Editable_remplazo):
+                    default_storage.delete(ruta_Editable_remplazo)
+                # Guardar el nuevo archivo
+                default_storage.save(ruta_Editable_remplazo, documento_editable)
 
+            if documento_pdf:
+                # Borrar el archivo actual si existe
+                if default_storage.exists(ruta_pdf_remplazo):
+                    default_storage.delete(ruta_pdf_remplazo)
+                # Guardar el nuevo archivo
+                default_storage.save(ruta_pdf_remplazo, documento_pdf)
+                
             
+            messages.success(request,"Se actualizado el archivo correctamente")
             
-            
-        # Procesar y guardar los archivos aquí...
-
-        return HttpResponse("Documentos cargados correctamente")
+            return redirect('home')
+        else:
+            return redirect('update_document')
     else:
-        print(request.GET)
-    
-    context = {}
-    return render(request, template, context)
+        context = {}
+        return render(request, template, context)
+
 
 # Vista para autocompletar nomenclatura
 def autocomplete_nomenclatura(request):

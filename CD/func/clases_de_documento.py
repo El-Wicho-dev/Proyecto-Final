@@ -37,6 +37,35 @@ def nomenclatura(nombre):
     return no_documento, no_linea, consecutivo, revision, nombre_del_documento
 
 
+def nomenclatura_plantilla(nombre):
+    if nombre is None:
+        raise ValueError("El nombre del documento no puede ser None.")
+    
+    # Remover la extensión del archivo
+    nombre_sin_extension = nombre.rsplit('.', 1)[0]
+    
+    # Reemplazar caracteres específicos para facilitar la división
+    nombre_formateado = nombre_sin_extension.replace("_", " ").replace(".", " ")
+    
+    # Dividir el nombre en partes según los espacios
+    partes = nombre_formateado.split()
+    
+    # Obtener no_documento y no_linea
+    no_documento, no_linea = partes[0].split('-')
+    
+    # Obtener el consecutivo
+    consecutivo = partes[1]
+    
+    # Extraer la revisión, que siempre sigue al 'REV'
+    index_rev = partes.index('REV') + 1
+    revision = partes[index_rev] if index_rev < len(partes) else None
+    
+    # Unir el resto del nombre del documento desde la posición después de la revisión
+    nombre_del_documento = ' '.join(partes[index_rev + 1:])
+    
+    return no_documento, no_linea, consecutivo, revision, nombre_del_documento
+
+
 def get_ruta_actual(id_documento):
     documento = Documento.objects.select_related('id_plantilla', 'id_linea', 'id_linea__area').get(pk=id_documento)
     plantilla = documento.id_plantilla.nombre
